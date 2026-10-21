@@ -6,6 +6,38 @@
 
 ---
 
+## 立即試玩
+
+- **手機或電腦瀏覽器**：https://claude.ai/artifact/Xq13Jtm6bhdVe4PM2ZjjbP （單人試玩版）
+- **GitHub Pages**（開啟 Pages 之後）：`https://york260.github.io/DOOM/play/`
+- **自己跑**：
+
+  ```bash
+  cd game
+  npm install
+  npm run dev     # 開發伺服器
+  npm run build   # 產出 dist/index.html（單一檔案，可直接打開）
+  ```
+
+### 操作
+
+| | 手機 | 電腦 |
+|---|---|---|
+| 移動 | 左半邊螢幕拖曳 | WASD／方向鍵 |
+| 互動（撿、開箱、救人、修門、說話） | 右下角小按鈕 | E |
+| 異能 | 右下角大按鈕 | 空白鍵 |
+| 暫停 | 右上角 ‖ | Esc |
+
+武器會自動攻擊。異能鍵外圈越亮，代表你越接近一個隱藏條件；在條件成立時按下去，異能就會進化。
+
+### 開啟 GitHub Pages
+
+1. 把這個分支合併進 `main`。
+2. 到 GitHub 的 Settings → Pages，把 Source 設成「GitHub Actions」。
+3. 之後每次推送到 `main`，`.github/workflows/pages.yml` 會自動建置並發布：首頁是介紹頁，`/play/` 是遊戲。
+
+開發進度見 [`game/PROGRESS.md`](game/PROGRESS.md)。
+
 ## 目前版本：v2（重新定位）
 
 v2 把設計收斂成：**上手三十秒，每一輪都不一樣，爽點只有兩個：異能和活下去。**
