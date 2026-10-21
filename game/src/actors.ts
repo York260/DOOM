@@ -1,7 +1,8 @@
 // The player and NPC survivors (partners).
 import * as THREE from "three";
 import { textSprite } from "./util";
-import type { NpcDef } from "./data";
+import type { NpcDef, RoleDef, MajorDef } from "./data";
+import type { AbilityRuntime } from "./ability";
 
 function figure(vest: number, skin = 0xe2bfa0) {
   const g = new THREE.Group();
@@ -19,7 +20,21 @@ function figure(vest: number, skin = 0xe2bfa0) {
 
 export interface Pack { food: number; power: number; mat: number }
 
+export const PLAYER_VESTS = [0xe8762e, 0x4fa3e0, 0x8fcf6a, 0xd06ad9];
+
 export class Player {
+  id = 0;
+  name = "你";
+  ab!: AbilityRuntime;
+  role!: RoleDef;
+  major!: MajorDef;
+  inp = { mx: 0, mz: 0, ab: false, it: false };
+  reviveT = 0; reviveCd = 0; meleeT = 0; stealthStill = 0; warnedFull = false; lastGlow = 0;
+  interactLabel: string | null = null;
+  interactFn: (() => void) | null = null;
+  hurtFlashT = 0; stillKills = 0;
+  ready = true;
+  nameTag: THREE.Sprite | null = null;
   x = 0; z = 0; vx = 0; vz = 0;
   hp = 100; maxHp = 100;
   speed = 6.2;
@@ -55,6 +70,14 @@ export class Player {
   }
 
   carried() { return this.pack.food + this.pack.power + this.pack.mat; }
+
+  setName(name: string, show: boolean) {
+    this.name = name;
+    if (this.nameTag) { this.mesh.remove(this.nameTag); this.nameTag = null; }
+    if (show) { this.nameTag = textSprite(name, { size: 34, scale: 0.022, color: "#f2b75a" }); this.nameTag.position.y = 2.3; this.mesh.add(this.nameTag); }
+  }
+
+  dispose(scene: THREE.Scene) { scene.remove(this.mesh); }
 
   render(time: number, glow: number, color: string) {
     this.mesh.position.set(this.x, 0, this.z);
@@ -92,9 +115,12 @@ export class Npc {
   label: THREE.Sprite;
   marker: THREE.Sprite;
   savedDay = 0;
+  /** id of the player this NPC follows */
+  leader = 0;
+  color: number;
 
   constructor(scene: THREE.Scene, x: number, z: number, name: string, who: string, color: number, def: NpcDef | null) {
-    this.x = x; this.z = z; this.name = name; this.who = who; this.def = def;
+    this.x = x; this.z = z; this.name = name; this.who = who; this.def = def; this.color = color;
     const f = figure(color);
     this.mesh = f.g;
     this.label = textSprite(name, { size: 34, scale: 0.024 });

@@ -189,7 +189,7 @@ export class UI {
   closeModal() { this.modalEl.hidden = true; this.modalEl.innerHTML = ""; }
   private open(inner: HTMLElement) { this.modalEl.innerHTML = ""; this.modalEl.appendChild(inner); this.modalEl.hidden = false; this.modalEl.scrollTop = 0; }
 
-  showTitle(meta: Meta, onStart: (nights: 3 | 7) => void, onMute: (m: boolean) => void, onReset: () => void, cont: { label: string; go: () => void } | null = null) {
+  showTitle(meta: Meta, onStart: (nights: 3 | 7) => void, onMute: (m: boolean) => void, onReset: () => void, cont: { label: string; go: () => void } | null = null, onCoop: (() => void) | null = null) {
     const p = h("div", "panel");
     let nights = meta.nights;
     const facts = Object.keys(meta.facts).length;
@@ -202,7 +202,7 @@ export class UI {
           <p class="muted">${meta.loop > 1 ? `第 ${meta.loop} 輪。你記得 ${facts} 件事。` : "第一輪。你什麼都不知道。"}</p>
           <div class="row"><span class="muted" style="font-size:13px">模式</span><div class="seg" id="mode"><button type="button" data-n="3">三夜（約 25 分鐘）</button><button type="button" data-n="7">七夜</button></div></div>
           ${cont ? `<button class="btn primary" id="cont" type="button" style="align-self:flex-start">${esc(cont.label)}</button>` : ""}
-          <div class="row"><button class="btn ${cont ? "" : "primary"}" id="go" type="button">${cont ? "重新報到" : "報到"}</button><button class="btn small" id="mute" type="button"></button></div>
+          <div class="row"><button class="btn ${cont ? "" : "primary"}" id="go" type="button">${cont ? "重新報到" : "報到"}</button>${onCoop ? `<button class="btn" id="coop" type="button">和朋友連線</button>` : ""}<button class="btn small" id="mute" type="button"></button></div>
           <p class="help"><b>手機</b>：左半邊拖曳移動，右下角兩顆按鈕：互動、異能。<br><b>電腦</b>：WASD／方向鍵移動，E 互動，空白鍵異能。<br>武器會自動攻擊。異能鍵越亮，代表你越接近一個隱藏條件。</p>
           ${meta.loop > 1 || meta.runs > 0 ? `<button class="btn small" id="reset" type="button" style="align-self:flex-start">清除所有記憶</button>` : ""}
         </div>
@@ -217,6 +217,7 @@ export class UI {
     mute.addEventListener("click", () => { meta.muted = !meta.muted; paintMute(); onMute(meta.muted); });
     p.querySelector("#go")!.addEventListener("click", () => onStart(nights));
     p.querySelector("#cont")?.addEventListener("click", () => { this.closeModal(); cont!.go(); });
+    p.querySelector("#coop")?.addEventListener("click", () => onCoop?.());
     p.querySelector("#reset")?.addEventListener("click", (e) => {
       const b = e.currentTarget as HTMLButtonElement;
       if (b.dataset.armed) { onReset(); } else { b.dataset.armed = "1"; b.textContent = "再按一次確認清除"; }
@@ -309,6 +310,69 @@ export class UI {
       const b = e.currentTarget as HTMLButtonElement;
       if (b.dataset.armed) { this.closeModal(); onQuit(); } else { b.dataset.armed = "1"; b.textContent = "再按一次確認"; }
     });
+    this.open(p);
+  }
+
+  showLobby(supported: boolean, lastName: string, onHost: (name: string) => void, onJoin: (name: string, code: string) => void, onBack: () => void) {
+    const p = h("div", "panel");
+    p.innerHTML = `
+      <span class="eyebrow">連線合作　1–4 人</span>
+      <h2>和朋友一起報名</h2>
+      ${supported ? "" : `<p class="missed">這個環境不支援連線（例如在 Claude 的預覽裡）。請用 GitHub Pages 的版本開啟。</p>`}
+      <label class="muted" for="nm" style="font-size:13px">你的名字</label>
+      <input id="nm" class="field" maxlength="12" value="${esc(lastName)}" placeholder="例如：凌宇">
+      <div class="row"><button class="btn primary" id="host" type="button" ${supported ? "" : "disabled"}>開一個房間</button></div>
+      <div class="sec"><small>加入朋友的房間</small>
+        <div class="row"><input id="code" class="field" maxlength="4" placeholder="四碼房號" style="max-width:9em;text-transform:uppercase"><button class="btn" id="join" type="button" ${supported ? "" : "disabled"}>加入</button></div>
+        <p class="muted" id="msg" style="font-size:13px"></p>
+      </div>
+      <p class="help">主機負責跑整個遊戲，其他人的畫面跟著主機。每個人的異能都不一樣，連自己都不知道。<br>連線用的是瀏覽器之間的直接連線（WebRTC），房號由公用的配對伺服器轉介。</p>
+      <button class="btn small" id="back" type="button" style="align-self:flex-start">返回</button>`;
+    const nm = () => ((p.querySelector("#nm") as HTMLInputElement).value.trim() || "志工");
+    p.querySelector("#host")!.addEventListener("click", () => onHost(nm()));
+    p.querySelector("#join")!.addEventListener("click", () => {
+      const code = (p.querySelector("#code") as HTMLInputElement).value.trim().toUpperCase();
+      if (code.length !== 4) { (p.querySelector("#msg") as HTMLElement).textContent = "房號是四個字元。"; return; }
+      (p.querySelector("#msg") as HTMLElement).textContent = "連線中……";
+      onJoin(nm(), code);
+    });
+    p.querySelector("#back")!.addEventListener("click", () => onBack());
+    this.open(p);
+    return { setMsg: (t: string) => { const m = p.querySelector("#msg"); if (m) m.textContent = t; } };
+  }
+
+  showHostRoom(code: string, onStart: (nights: 3 | 7) => void, onClose: () => void) {
+    const p = h("div", "panel");
+    let nights: 3 | 7 = 3;
+    p.innerHTML = `
+      <span class="eyebrow">你的房間</span>
+      <h2 style="font-family:var(--mono);font-size:44px;letter-spacing:.2em;color:var(--amber)">${esc(code)}</h2>
+      <p class="muted">把這四個字告訴朋友，請他們按「和朋友連線」→ 輸入房號 → 加入。</p>
+      <div class="sec"><small>已經在房間裡的人</small><ul class="events" id="list"></ul></div>
+      <div class="row"><span class="muted" style="font-size:13px">模式</span><div class="seg" id="mode"><button type="button" data-n="3">三夜</button><button type="button" data-n="7">七夜</button></div></div>
+      <div class="row"><button class="btn primary" id="go" type="button">大家一起報到</button><button class="btn small" id="close" type="button">關閉房間</button></div>`;
+    const seg = p.querySelector("#mode")!;
+    const paint = () => seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(Number((b as HTMLElement).dataset.n) === nights)));
+    paint();
+    seg.addEventListener("click", (e) => { const b = (e.target as HTMLElement).closest("button"); if (!b) return; nights = Number(b.dataset.n) as 3 | 7; paint(); });
+    p.querySelector("#go")!.addEventListener("click", () => onStart(nights));
+    p.querySelector("#close")!.addEventListener("click", () => onClose());
+    this.open(p);
+    return { setNames: (names: string[]) => { const l = p.querySelector("#list"); if (l) l.innerHTML = names.map((n, i) => `<li><span>${i === 0 ? "主機" : `玩家 ${i + 1}`}</span>${esc(n)}</li>`).join(""); } };
+  }
+
+  showWait(title: string, text: string, onLeave: () => void) {
+    const p = h("div", "panel");
+    p.innerHTML = `<span class="eyebrow">連線中</span><h2>${esc(title)}</h2><p class="muted">${esc(text)}</p><button class="btn small" id="leave" type="button" style="align-self:flex-start">離開房間</button>`;
+    p.querySelector("#leave")!.addEventListener("click", () => onLeave());
+    this.open(p);
+  }
+
+  showMorningView(day: number, lines: { text: string; hook?: boolean }[]) {
+    const p = h("div", "panel");
+    p.innerHTML = `<span class="eyebrow">第 ${day} 天　06:00</span><h2>生存日誌</h2>
+      <div class="diary">${lines.map((l) => `<p class="${l.hook ? "hook" : ""}">${esc(l.text)}</p>`).join("")}</div>
+      <p class="muted">主機正在選擇今天的建設……</p>`;
     this.open(p);
   }
 
