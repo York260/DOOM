@@ -24,7 +24,7 @@ export class Base {
     scene.add(this.group);
     const r = def.rect;
     this.box = rectBox(r);
-    this.core = { x: r.x, z: r.z, hp: 520, max: 520 };
+    this.core = { x: r.x, z: r.z, hp: 800, max: 800 };
     // generator in a corner away from the doors
     this.gen = { x: r.x - r.w / 2 + 2, z: r.z - r.d / 2 + 2 };
     def.doors.forEach((_, i) => {

@@ -52,7 +52,7 @@ interface SnapPlayer {
 }
 interface SnapState {
   ph: Phase; d: number; c: number; w: Weather; st: { food: number; power: number; mat: number }; pe: number; obj: string | null;
-  susp: number; loop: number; drill: number; rift: number; fire: number; adm: number;
+  susp: number; loop: number; drill: number; rift: number; fire: number; adm: number; ca: number;
   pl: SnapPlayer[];
   np: [number, number, number, number, number, string, string, number, string][]; // id x z state rescueT name who color defId
   cr: number[]; // x z kindIdx opened, repeated
@@ -164,17 +164,25 @@ export class Game {
   private tapsOn = false;
   private tapsPlayed = -1;
   private bossStun = 0;
+  private coreHitT = -99;
+  private simT = 0;
+  private gCoreHit = false;
+  private coreToldT = -99;
+  private weakTold = false;
+  private breachTold = false;
   private shake = 0;
   private bellT = 0;
   private bellMark: { x: number; z: number; t: number } | null = null;
   private frameAvg = 16;
   private pixelRatio = 1;
+  private qualityT = 0;
 
   constructor(private root: HTMLElement) {
     this.meta = loadMeta();
     this.audio.setMuted(this.meta.muted);
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75);
-    this.renderer = new THREE.WebGLRenderer({ antialias: this.pixelRatio < 2, powerPreference: "high-performance" });
+    // dense phone screens don't need MSAA; it costs a lot of fill rate there
+    this.renderer = new THREE.WebGLRenderer({ antialias: (window.devicePixelRatio || 1) < 1.5, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(root.clientWidth, root.clientHeight);
     root.appendChild(this.renderer.domElement);
@@ -472,7 +480,7 @@ export class Game {
     this.stats = this.freshStats();
     this.runFacts = new Set();
     this.suspicion = 0; this.prophecy = false; this.hasKey = false; this.codeKnown = !!this.meta.facts.safe;
-    this.carrierDone = false; this.blackoutT = 0; this.tapsOn = false; this.tapsPlayed = -1; this.bossStun = 0; this.omenIdx = 0; this.drillStep = 0; this.drillCrates = 0;
+    this.carrierDone = false; this.blackoutT = 0; this.tapsOn = false; this.tapsPlayed = -1; this.bossStun = 0; this.weakTold = false; this.breachTold = false; this.coreHitT = -99; this.coreToldT = -99; this.omenIdx = 0; this.drillStep = 0; this.drillCrates = 0;
     this.adapt = null; this.lure = null; this.endT = -1; this.lost = false; this.spawnQueue = []; this.waves = []; this.timers = [];
     const pool = shuffle(stream(this.seed, "nights"), NIGHT_POOL);
     this.nightPlan = [NIGHT_FIRST];
@@ -628,17 +636,23 @@ export class Game {
     this.renderScene(now / 1000);
   }
 
+  /** Lower the render resolution step by step while frames stay slow (below ~45 fps). */
   private adaptQuality(dt: number) {
+    const inPlay = this.phase === "eve" || this.phase === "day" || this.phase === "night";
+    if (!inPlay || this.paused || this.ui.modalOpen) { this.qualityT = 0; return; }
+    this.qualityT += dt;
+    if (this.qualityT < 3) { this.frameAvg = 16; return; } // skip shader warm-up
     this.frameAvg = this.frameAvg * 0.97 + dt * 1000 * 0.03;
-    if (this.frameAvg > 26 && this.pixelRatio > 1) {
-      this.pixelRatio = Math.max(1, this.pixelRatio - 0.25);
+    if (this.frameAvg > 22 && this.pixelRatio > 0.75) {
+      this.pixelRatio = Math.max(0.75, +(this.pixelRatio - 0.25).toFixed(2));
       this.renderer.setPixelRatio(this.pixelRatio);
-      this.frameAvg = 16;
+      this.frameAvg = 16; this.qualityT = 0;
     }
   }
 
   /** Advance the simulation (host / solo; also used by tests). */
   update(dt: number) {
+    this.simT += dt;
     for (let k = this.timers.length - 1; k >= 0; k--) { const tm = this.timers[k]; tm.t -= dt; if (tm.t <= 0) { this.timers.splice(k, 1); tm.fn(); } }
     this.updateClock(dt);
     for (const p of this.players) { this.player = p; this.updatePlayer(dt); }
@@ -853,7 +867,8 @@ export class Game {
     const b = this.base!.def.rect;
     const far = this.world.drains.filter((d) => dist(d.x, d.z, b.x, b.z) > 22);
     const west = far.filter((d) => d.x < 0);
-    const crowd = 1 + 0.45 * (this.players.length - 1);
+    // more humans make more noise: teammates and sheltered people draw bigger waves
+    const crowd = 1 + 0.45 * (this.players.length - 1) + 0.1 * Math.min(8, this.people());
     const spawnAt = (type: BugType, count: number, src: { x: number; z: number }[], delayStep = 0.12) => {
       const c = Math.round(count * crowd);
       for (let i = 0; i < c; i++) { const d = src[i % src.length]; this.queueSpawn(type, d.x + (r() - 0.5) * 4, d.z + (r() - 0.5) * 4, i * delayStep); }
@@ -878,6 +893,16 @@ export class Game {
       boss: () => { this.spawnBoss(); },
     };
     if (extra[id]) this.waves.push({ at: id === "boss" ? 6 : 50, done: false, spawn: extra[id] });
+    // later nights of the long mode escalate: a fourth wave, then a second threat mixed in
+    if (id !== "boss" && n >= 3) this.waves.push({ at: 112, done: false, spawn: () => {
+      spawnAt(LEAPER, 2 + n, far, 0.3); spawnAt(MITE, Math.round(base * 0.6), far);
+      if (n >= 5) spawnAt(TANK, n - 4, far, 1.2);
+      this.say("還沒結束。又一波。", "red", 2400);
+    } });
+    if (id !== "boss" && n >= 4) {
+      const other = pick(r, NIGHT_POOL.filter((x) => x.id !== id && x.id !== "adapt" && extra[x.id]));
+      if (other) this.waves.push({ at: 92, done: false, spawn: () => { extra[other.id](); this.say(`今晚不只一種：${other.name}。`, "red", 3000); } });
+    }
     if (id === "boss") {
       this.waves.push({ at: 60, done: false, spawn: () => { spawnAt(LEAPER, 6, far, 0.3); spawnAt(MITE, base, far); } });
       this.waves.push({ at: 110, done: false, spawn: () => { spawnAt(TANK, 2, far, 1); spawnAt(MITE, base, far); } });
@@ -1064,7 +1089,7 @@ export class Game {
           const range = 7.5 * tower;
           const ti = this.swarm.nearest(n.x, n.z, range);
           if (ti >= 0) {
-            let dmg = 8 * tower * (n.def?.id === "chenyan" ? 1.6 : 1) * (this.npcs.some((x) => x.state === "base" && x.def?.id === "yan") ? 1.2 : 1);
+            let dmg = 6 * tower * (n.def?.id === "chenyan" ? 1.6 : 1) * (this.npcs.some((x) => x.state === "base" && x.def?.id === "yan") ? 1.2 : 1);
             dmg *= this.dmgBonus(this.swarm.x[ti], this.swarm.z[ti]);
             this.fx.bolt([{ x: n.x, z: n.z }, { x: this.swarm.x[ti], z: this.swarm.z[ti] }], 0xcfd6dd);
             this.swarm.damage(ti, dmg, "turret", this.adapt);
@@ -1101,6 +1126,19 @@ export class Game {
     if (n.def) this.ev(`${n.name}（${n.who}）加入了據點。`, 1);
   }
 
+  /** The shelter is being hit: warn everyone, at most every 15 seconds. */
+  private coreHit() {
+    const now = this.simT;
+    this.coreHitT = now;
+    if (Math.random() < 0.15) this.audio.door();
+    if (now - this.coreToldT > 15 && this.base && this.base.core.hp > 0) {
+      this.coreToldT = now;
+      this.say(`避難室被攻擊了！（剩 ${Math.max(0, Math.round((this.base.core.hp / this.base.core.max) * 100))}%）`, "red", 3000);
+      this.sfx("alarm");
+    }
+  }
+  private get coreUnderAttack() { return this.mode === "guest" ? this.gCoreHit : this.simT - this.coreHitT < 3; }
+
   private hurtNpc(n: Npc, dmg: number) {
     n.hp -= dmg;
     if (n.hp <= 0 && n.state !== "dead") {
@@ -1131,7 +1169,7 @@ export class Game {
       hitTarget: (t: Target, dmg: number) => {
         if (t.kind === "player") this.hurtPlayer(t.ref as Player, dmg);
         else if (t.kind === "npc") this.hurtNpc(t.ref as Npc, dmg);
-        else if (t.kind === "core" && this.base) { this.base.core.hp -= dmg; if (Math.random() < 0.2) this.audio.door(); }
+        else if (t.kind === "core" && this.base) { this.base.core.hp -= dmg * 0.6; this.coreHit(); }
       },
       hitBarricade: (ref: number, dmg: number) => {
         if (!this.base) return;
@@ -1274,7 +1312,7 @@ export class Game {
 
   private spawnBoss() {
     const { g, eyes } = this.makeBossMesh();
-    const max = 2600 * (this.nightsTotal === 7 ? 1.6 : 1) * (1 + 0.5 * (this.players.length - 1));
+    const max = 2200 * (this.nightsTotal === 7 ? 1.6 : 1) * (1 + 0.5 * (this.players.length - 1));
     this.boss = { x: RIFT.x, z: RIFT.z, hp: max, max, r: 3.4, mesh: g, spawnCd: 4, slamCd: 3, windup: 0, alive: true, eyes };
     this.sfx("quake"); this.flashAll();
     this.freezeAll("裂隙完全打開了。天上，有一千隻眼睛同時睜開。", "千眼之母", 3200);
@@ -1287,7 +1325,7 @@ export class Game {
     if (this.bossStun > 0) { this.bossStun -= dt; return; }
     const base = this.base!;
     const half = b.hp < b.max * 0.5;
-    const sp = half ? 1.9 : 1.3;
+    const sp = half ? 1.7 : 1.1;
     const d = this.baseField ? this.world.flowDir(this.baseField, b.x, b.z) : null;
     let near: Player | null = null, pd = 1e9;
     for (const p of this.alivePlayers()) { const dd = dist(p.x, p.z, b.x, b.z); if (dd < pd) { pd = dd; near = p; } }
@@ -1295,10 +1333,15 @@ export class Game {
     if (near && pd < 12) { dx = (near.x - b.x) / pd; dz = (near.z - b.z) / pd; }
     const pos = { x: b.x + dx * sp * dt, z: b.z + dz * sp * dt };
     for (const o of this.world.solids) resolveCircleBox(pos, b.r * 0.8, o);
-    for (const door of base.doors) if (door.hp > 0 && boxDist(door.box, pos.x, pos.z) < b.r) { if (base.hitDoor(door.i, 70 * dt)) this.say("千眼之母撞破了門！", "red", 2500); resolveCircleBox(pos, b.r * 0.8, door.box); }
+    for (const door of base.doors) if (door.hp > 0 && boxDist(door.box, pos.x, pos.z) < b.r) { if (base.hitDoor(door.i, 45 * dt)) this.say("千眼之母撞破了門！", "red", 2500); resolveCircleBox(pos, b.r * 0.8, door.box); }
     for (const w of this.world.walls.get(base.def.id)!) resolveCircleBox(pos, b.r * 0.8, w);
     b.x = pos.x; b.z = pos.z;
-    if (dist(b.x, b.z, base.core.x, base.core.z) < b.r + 2.5) base.core.hp -= 22 * dt;
+    // too big for the doorways: it besieges a door, and once that door is broken it reaches inside
+    const breach = base.doors.find((d) => d.hp <= 0 && dist(b.x, b.z, d.x, d.z) < b.r + 1.5);
+    if (breach || dist(b.x, b.z, base.core.x, base.core.z) < b.r + 2.5) {
+      base.core.hp -= 9 * dt; this.coreHit();
+      if (!this.breachTold) { this.breachTold = true; this.say("千眼之母把觸手伸進了破掉的門！去門口把牠打退！", "red", 4000); }
+    }
     b.spawnCd -= dt;
     if (b.spawnCd <= 0) {
       b.spawnCd = half ? 4.5 : 6;
@@ -1318,8 +1361,11 @@ export class Game {
   private damageBoss(dmg: number, src: DmgSource) {
     const b = this.boss;
     if (!b || !b.alive) return;
-    b.hp -= dmg * (this.adapt === src ? 0.45 : 1);
-    this.fx.burst(b.x, b.z, 0xffb54a, 3, 4, 3);
+    // all its eyes open while it winds up a slam: that is when it is weakest
+    const weak = b.windup > 0;
+    b.hp -= dmg * (this.adapt === src ? 0.45 : 1) * (weak ? 2 : 1);
+    this.fx.burst(b.x, b.z, weak ? 0xffffff : 0xffb54a, weak ? 6 : 3, 4, 3);
+    if (weak && !this.weakTold) { this.weakTold = true; this.say("牠蓄力的時候，所有的眼睛都睜開了。現在打牠，傷害加倍！", "warm", 3500); }
     if (b.hp <= 0) {
       b.alive = false; b.hp = 0;
       this.stats.bossKilled = true;
@@ -1826,7 +1872,7 @@ export class Game {
     const s: SnapState = {
       ph: this.phase, d: this.day, c: this.clock, w: this.weather, st: { ...this.stash }, pe: this.people(), obj: this.objective,
       susp: this.suspicion, loop: this.meta.loop, drill: this.drillStep, rift: this.rift.visible ? 1 : 0, fire: this.world.firesLit ? 1 : 0,
-      adm: this.world.adminWindows?.visible ? 1 : 0,
+      adm: this.world.adminWindows?.visible ? 1 : 0, ca: this.coreUnderAttack ? 1 : 0,
       pl: this.players.map((p) => {
         const ab = p.ab;
         const active = this.phase !== "eve" && this.phase !== "quake";
@@ -1909,6 +1955,7 @@ export class Game {
     if (this.world.firesLit !== !!s.fire) this.world.lightFires(!!s.fire);
     if (this.world.adminWindows) this.world.adminWindows.visible = !!s.adm;
     this.guestPeople = s.pe;
+    this.gCoreHit = !!s.ca;
     this.guestLoop = s.loop;
     // players
     const seen = new Set<number>();
@@ -2118,7 +2165,8 @@ export class Game {
       marks.push({ x: sx, y: sy, ang: Math.atan2(dx, -dy), label: text, tone: tone2 });
     };
     const b = this.chosenBaseDef();
-    if (b && !(this.base?.inside(p.x, p.z))) add(b.rect.x, b.rect.z, "據點", "jade");
+    if (this.base && this.coreUnderAttack && dist(p.x, p.z, this.base.core.x, this.base.core.z) > 5) add(this.base.core.x, this.base.core.z, "避難室被攻擊", "red");
+    else if (b && !(this.base?.inside(p.x, p.z))) add(b.rect.x, b.rect.z, "據點", "jade");
     if (!b && (this.phase !== "eve" || this.drillStep === 2)) for (const bd of BASES) add(bd.rect.x, bd.rect.z, bd.name, "steel");
     if (this.phase === "eve" && this.drillStep === 0) add(0, 36, "區隊長", "");
     for (const o of this.players) if (o !== p) add(o.x, o.z, o.downed ? `${o.name}（倒地）` : o.name, o.downed ? "red" : "steel");

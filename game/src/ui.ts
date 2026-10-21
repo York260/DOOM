@@ -125,9 +125,12 @@ export class UI {
   }
   setGear(text: string) { this.set("gear", text, () => (this.gearEl.textContent = text)); }
   setAbility(glow: number, pips: boolean[], heat: number, face: string, color: string, locked: boolean) {
-    this.abBtn.style.setProperty("--g", glow.toFixed(2));
-    this.abBtn.classList.toggle("hot", glow >= 0.99);
-    this.abBtn.classList.toggle("locked", locked);
+    const g = glow.toFixed(2);
+    this.set("abg", g + (locked ? "L" : ""), () => {
+      this.abBtn.style.setProperty("--g", g);
+      this.abBtn.classList.toggle("hot", glow >= 0.99);
+      this.abBtn.classList.toggle("locked", locked);
+    });
     this.set("abc", color, () => this.abBtn.style.setProperty("--ab", color));
     this.set("abf", face, () => { this.abBtn.firstChild!.textContent = face; });
     pips.forEach((p, i) => this.abPips[i].classList.toggle("on", p));
@@ -140,8 +143,10 @@ export class UI {
     });
   }
   setBoss(frac: number | null, name = "") {
-    this.bossEl.hidden = frac === null;
-    if (frac !== null) { this.bossName.textContent = name; this.bossBar.style.width = `${Math.max(0, frac) * 100}%`; }
+    this.set("boss", frac === null ? "" : frac.toFixed(3) + name, () => {
+      this.bossEl.hidden = frac === null;
+      if (frac !== null) { this.bossName.textContent = name; this.bossBar.style.width = `${Math.max(0, frac) * 100}%`; }
+    });
   }
   setHurt(on: boolean) { this.vigEl.classList.toggle("hurt", on); }
 
