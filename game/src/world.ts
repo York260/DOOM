@@ -181,10 +181,18 @@ export class World {
     this.buildNav();
   }
 
+  private staticCache: Box[] | null = null;
   allStatic(): Box[] {
+    if (this.staticCache) return this.staticCache;
     const out = this.solids.concat(this.cars);
     for (const w of this.walls.values()) out.push(...w);
+    this.staticCache = out;
     return out;
+  }
+
+  /** True if (x,z) is open ground a person could stand on. */
+  walkable(x: number, z: number) {
+    return !this.blocked[this.cellOf(x, z)] && !this.baseAt(x, z);
   }
 
   private buildNav() {
@@ -421,7 +429,7 @@ export class World {
     ctx.fillStyle = "#e6e9ec"; ctx.textBaseline = "middle"; ctx.fillText(text, 14, c.height / 2 + 2);
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
-    const k = 0.045; s.scale.set(w * k, c.height * k, 1); s.position.set(x, y, z); s.renderOrder = 5;
+    const k = 0.034; s.scale.set(w * k, c.height * k, 1); s.position.set(x, y, z); s.renderOrder = 5;
     this.group.add(s);
   }
 

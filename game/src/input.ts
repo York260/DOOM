@@ -15,7 +15,7 @@ export class Input {
   readonly joyBase: HTMLDivElement;
   readonly joyKnob: HTMLDivElement;
 
-  constructor(private root: HTMLElement) {
+  constructor(root: HTMLElement) {
     this.joyBase = document.createElement("div");
     this.joyBase.className = "joy-base";
     this.joyKnob = document.createElement("div");
