@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="《熄燈號之後》概念預覽：演習志工的前夜、一鍵異能、七夜守城與生存日誌。">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>熄燈號之後</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400&family=JetBrains+Mono:wght@400;600&family=Saira+Stencil+One&display=swap">
+<style>
+:root{
+  /* Layout: one-column scroll on phones, night bands split by hairlines; grids open from 720px. Single dark look by design: the game is called "after lights-out". */
+  --night:#0a0f17;
+  --night-2:#101823;
+  --night-3:#172130;
+  --line:#253244;
+  --paper:#dce1e6;
+  --muted:#8e9bab;
+  --faint:#5f6c7c;
+  --amber:#e9a640;
+  --amber-hi:#f2b75a;
+  --amber-ink:#1a1206;
+  --amber-soft:rgba(233,166,64,.13);
+  --jade:#6bae9f;
+  --seal:#c9503a;
+  --steel:#8ea3c4;
+  --plum:#b88bd0;
+  --bar:rgba(10,15,23,.9);
+  --rule:rgba(142,155,171,.16);
+  --shade:rgba(10,15,23,.82);
+
+  --display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --hand:"LXGW WenKai TC","Kaiti TC","DFKai-SB","BiauKai",serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --stencil:"Saira Stencil One",Impact,"Arial Narrow",sans-serif;
+
+  --fs-cap:13px;
+  --fs-s:15px;
+  --fs-b:16.5px;
+  --fs-l:19px;
+  --fs-h3:21px;
+  --fs-h2:clamp(28px,7.4vw,42px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--night);color:var(--paper);font-family:var(--body);font-size:var(--fs-b);line-height:1.8;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--night)}
+a{color:inherit}
+[id]{scroll-margin-top:calc(60px + env(safe-area-inset-top,0px))}
+h1,h2,h3,h4{font-family:var(--display);font-weight:900;text-wrap:balance;margin:0;line-height:1.3}
+h2{font-size:var(--fs-h2);letter-spacing:.02em}
+h3{font-size:var(--fs-h3);font-weight:600}
+p{margin:0}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:3px}
+.wrap{max-width:1080px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-size:var(--fs-cap);letter-spacing:.24em;color:var(--amber);font-weight:500}
+.lede{color:var(--muted);max-width:36em}
+.stack{display:flex;flex-direction:column;gap:14px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.nw{display:inline-block}
+
+/* header */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bar);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:14px;height:52px}
+.brand{font-family:var(--display);font-weight:900;font-size:17px;letter-spacing:.12em;text-decoration:none;white-space:nowrap}
+.nav{display:flex;gap:4px;overflow-x:auto;min-width:0;scrollbar-width:none;margin-left:auto;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 16px),transparent)}
+.nav::-webkit-scrollbar{display:none}
+.nav a{font-size:14px;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.nav a:hover{color:var(--paper);background:var(--night-3)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;background:var(--night);border-bottom:1px solid var(--line)}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,var(--night) 100%),linear-gradient(90deg,rgba(10,15,23,.85) 0,rgba(10,15,23,.5) 55%,transparent 85%);pointer-events:none}
+.hero .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding-block:72px 40px;min-height:580px}
+.hero-copy{align-self:end;display:flex;flex-direction:column;gap:18px;min-width:0;text-shadow:0 1px 14px var(--night)}
+.logo-en{font-family:var(--stencil);color:var(--amber);font-size:clamp(30px,8vw,46px);letter-spacing:.06em;line-height:1}
+.codename{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.12em}
+.tagline{font-family:var(--display);font-weight:600;font-size:clamp(18px,4.8vw,24px);line-height:1.65}
+.tagline span{display:block}
+.tagline em{font-style:normal;color:var(--amber)}
+.hero h1{writing-mode:vertical-rl;font-size:clamp(56px,16vw,112px);letter-spacing:.06em;line-height:1;align-self:start;text-shadow:0 0 28px rgba(233,166,64,.25)}
+.clock{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.clock b{font-size:clamp(26px,7vw,34px);color:var(--paper);font-weight:600;letter-spacing:.04em}
+.clock span{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.18em}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:700;font-size:15px;letter-spacing:.06em;border-radius:6px;padding:11px 18px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--night-2);color:var(--paper);transition:background .15s,border-color .15s,transform .15s}
+.btn:hover{border-color:var(--amber)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+.btn.primary:hover{background:var(--amber-hi)}
+.btn.small{padding:7px 14px;font-size:14px}
+.meta-line{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.08em;display:flex;flex-wrap:wrap;gap:2px 16px}
+
+/* bands */
+.band{border-bottom:1px solid var(--line)}
+.band > .wrap{padding-block:64px;display:flex;flex-direction:column;gap:28px}
+.band.alt{background:var(--night-2)}
+.head{display:flex;flex-direction:column;gap:12px}
+
+/* segmented */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--night-2);align-self:flex-start;max-width:100%}
+.band.alt .seg{background:var(--night)}
+.seg button{appearance:none;font:inherit;font-size:15px;font-weight:500;border:0;background:transparent;color:var(--muted);padding:7px 16px;border-radius:999px;cursor:pointer;letter-spacing:.06em;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--night)}
+.seg button.warm[aria-pressed="true"]{background:var(--amber);color:var(--amber-ink)}
+
+/* eve */
+.log{display:flex;flex-direction:column;gap:18px;max-width:40em;padding:0;margin:0;list-style:none}
+.log li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px}
+.log .t{font-family:var(--mono);color:var(--amber);font-size:14px;padding-top:4px}
+.log p{font-family:var(--display);font-weight:600;font-size:var(--fs-l);line-height:1.75}
+.log p small{display:block;font-family:var(--body);font-weight:400;font-size:var(--fs-s);color:var(--muted);margin-top:2px}
+.countbar{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border:1px solid var(--amber);border-radius:8px;padding:12px 16px;align-self:flex-start}
+.countbar span{font-size:var(--fs-cap);color:var(--amber);letter-spacing:.16em}
+.countbar b{font-family:var(--mono);font-size:24px}
+.memo{background:var(--night-3);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:40em}
+.memo header{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-cap);color:var(--muted);letter-spacing:.16em}
+.memo ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-family:var(--hand);font-size:17px;line-height:1.7}
+.memo li{padding-left:22px;position:relative}
+.memo li::before{content:"✓";position:absolute;left:0;color:var(--jade);font-family:var(--body)}
+.memo li.wrong{color:var(--faint)}
+.memo li.wrong s{text-decoration-color:var(--seal)}
+.memo li.wrong::before{content:"✗";color:var(--seal)}
+.memo li.wrong em{display:block;font-style:normal;color:var(--seal);font-size:15px}
+.chapter{border-block:1px solid var(--line);padding-block:22px;display:flex;flex-direction:column;gap:6px}
+.chapter small{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.24em}
+.chapter strong{font-family:var(--display);font-weight:900;font-size:clamp(24px,6.4vw,36px);letter-spacing:.04em;line-height:1.4}
+
+/* core */
+.keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.key{border:1px solid var(--line);border-radius:10px;padding:16px 12px;background:var(--night);display:flex;flex-direction:column;gap:10px;min-width:0}
+.cap{min-width:46px;height:46px;padding-inline:8px;border-radius:9px;border:1.5px solid var(--paper);display:inline-grid;place-items:center;align-self:flex-start;font-family:var(--mono);font-weight:600;font-size:14px;box-shadow:0 3px 0 var(--line)}
+.cap.ab{width:46px;padding:0;border-color:var(--amber);color:var(--amber);border-radius:50%;font-family:var(--display);font-size:20px}
+.key b{font-family:var(--display);font-weight:900;font-size:18px}
+.key p{font-size:14px;color:var(--muted);line-height:1.65}
+.twin{display:grid;gap:18px}
+.joy{border-top:1px solid var(--amber);padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.joy small{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.12em}
+.joy ul{margin:0;padding-left:1.1em;color:var(--muted);font-size:var(--fs-s);display:flex;flex-direction:column;gap:4px}
+.vary{display:flex;flex-wrap:wrap;gap:8px}
+.vary span{font-size:14px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--paper)}
+.vary span b{color:var(--amber);font-family:var(--mono);font-weight:600;margin-left:6px}
+
+/* ability sandbox */
+.sandbox{display:grid;gap:22px}
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;padding:26px 16px 20px;border:1px solid var(--line);border-radius:12px;background:radial-gradient(circle at 50% 38%,var(--night-3),var(--night) 70%);overflow:hidden}
+.ab-name{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.12em;text-align:center}
+.ab-name b{color:var(--paper);font-weight:600}
+.ab-btn{--g:0;appearance:none;width:136px;height:136px;border-radius:50%;border:2px solid var(--amber);background:var(--night-3);color:var(--amber);font-family:var(--display);font-weight:900;font-size:46px;cursor:pointer;box-shadow:0 0 calc(10px + var(--g)*52px) calc(var(--g)*16px) rgba(233,166,64,calc(.12 + var(--g)*.6)),inset 0 0 calc(var(--g)*34px) rgba(233,166,64,calc(var(--g)*.45));transition:box-shadow .35s,transform .1s}
+.ab-btn:active{transform:scale(.96)}
+.ab-btn.hot{animation:hum 1.1s ease-in-out infinite}
+@keyframes hum{50%{transform:scale(1.04)}}
+.pips{display:flex;gap:10px;align-items:center}
+.pip{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--amber)}
+.pip.on{background:var(--amber)}
+.pip.secret{border-style:dashed;border-color:var(--faint)}
+.pip.secret.on{background:var(--jade);border:1.5px solid var(--jade)}
+.heat{width:min(240px,80%);display:flex;flex-direction:column;gap:4px}
+.heat span{font-size:12px;color:var(--faint);letter-spacing:.14em}
+.heat .track{height:5px;border-radius:999px;background:var(--line);overflow:hidden}
+.heat i{display:block;height:100%;width:0;background:var(--seal);border-radius:999px;transition:width .2s}
+.freeze-line{position:absolute;inset:0;display:grid;place-items:center;align-content:center;padding:24px;background:var(--shade);font-family:var(--display);font-weight:600;font-size:clamp(20px,5.6vw,26px);line-height:1.7;color:var(--amber);text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.freeze-line.show{opacity:1}
+.freeze-line small{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.14em;margin-top:8px}
+.controls{display:flex;flex-direction:column;gap:14px;min-width:0}
+.pick{display:flex;flex-direction:column;gap:8px}
+.pick > span{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.16em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{appearance:none;font:inherit;font-size:15px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--night-2);color:var(--paper);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.feed{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:8px;min-height:6em}
+.feed li{font-family:var(--hand);font-size:17px;line-height:1.65}
+.feed li:not(:first-child){color:var(--faint)}
+.feed li b{font-family:var(--body);font-weight:700;color:var(--amber);font-size:15px;margin-right:6px}
+.feed li.awake b{color:var(--jade)}
+.answer{font-family:var(--mono);font-size:13px;line-height:1.9;background:var(--night);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto;white-space:pre}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+
+/* roles */
+.roles{display:grid;gap:22px}
+.rolecard{border:1px solid var(--line);border-radius:10px;background:var(--night-3);overflow:hidden;max-width:440px;transition:transform .35s}
+.rolecard.flip{transform:rotateY(90deg)}
+.rolecard .band-top{height:10px;background:var(--tag,var(--paper))}
+.rolecard .in{padding:18px;display:flex;flex-direction:column;gap:10px}
+.rolecard .tag{font-size:var(--fs-cap);letter-spacing:.2em;color:var(--tag,var(--paper));font-weight:700}
+.rolecard h4{font-size:28px;letter-spacing:.06em}
+.rolecard dl{display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:6px 12px;margin:0;font-size:var(--fs-s)}
+.rolecard dt{color:var(--faint);font-size:var(--fs-cap);padding-top:2px}
+.rolecard dd{margin:0}
+.rolecard p{font-family:var(--hand);font-size:17px;line-height:1.7}
+.majors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;margin:0;padding:0;list-style:none}
+.majors li{display:flex;flex-direction:column;padding-block:10px;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted);line-height:1.6}
+.majors b{color:var(--paper);font-weight:700;font-size:15px}
+
+/* survival */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--night-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat small{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.16em}
+.stat b{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1.3}
+.stat span{font-size:13px;color:var(--faint);line-height:1.5}
+.stat.low b{color:var(--seal)}
+.split{display:flex;flex-direction:column;gap:40px}
+.locs{display:grid;border-top:1px solid var(--line)}
+.loc{display:flex;flex-direction:column;gap:4px;padding-block:16px;border-bottom:1px solid var(--line)}
+.loc .tag{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.06em}
+.loc h4{font-size:19px}
+.loc p{color:var(--muted);font-size:var(--fs-s)}
+.mode-doom .loc p{color:var(--paper)}
+.mode-doom .loc .tag{color:var(--amber)}
+.weather{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.weather li{display:grid;grid-template-columns:5.6em minmax(0,1fr) auto;gap:10px;padding-block:10px;border-bottom:1px solid var(--line);font-size:var(--fs-s);align-items:baseline}
+.weather b{font-weight:700}
+.weather span{color:var(--muted)}
+.weather em{font-style:normal;font-size:13px;color:var(--amber);white-space:nowrap}
+
+/* nights */
+.nights{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.night{display:grid;grid-template-columns:3.4em minmax(0,1fr);gap:12px;align-items:start;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--night);transition:border-color .3s}
+.night .n{font-family:var(--stencil);font-size:24px;color:var(--amber);line-height:1.2}
+.night b{font-family:var(--display);font-weight:900;font-size:18px;display:block}
+.night p{font-size:14px;color:var(--muted);line-height:1.6}
+.night.fixed{border-color:var(--amber-soft)}
+.night.boss{border-color:var(--seal)}
+.night.boss .n{color:var(--seal)}
+.night.new{border-color:var(--amber)}
+.bosses{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.bosses li{display:grid;grid-template-columns:minmax(0,6.5em) minmax(0,1fr);gap:12px;padding-block:10px;border-bottom:1px solid var(--line);font-size:var(--fs-s)}
+.bosses b{font-family:var(--display);font-weight:900;font-size:17px}
+.bosses span{color:var(--muted)}
+
+/* partners */
+.people{display:grid;gap:12px}
+.person{border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--night-2);min-width:0}
+.person header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.person h4{font-size:20px}
+.person header span{font-size:var(--fs-cap);color:var(--muted)}
+.person q{font-family:var(--hand);font-size:17px;line-height:1.7;quotes:"「" "」"}
+.person p{font-size:14px;color:var(--muted)}
+
+/* diary & report */
+.diary{background:var(--night-3);background-image:repeating-linear-gradient(180deg,transparent 0 35px,var(--rule) 35px 36px);border:1px solid var(--line);border-radius:8px;padding:10px 18px 18px;max-width:40em}
+.diary header{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-cap);color:var(--muted);letter-spacing:.16em;line-height:36px}
+.diary h4{font-family:var(--hand);font-weight:400;font-size:20px;line-height:36px}
+.diary p{font-family:var(--hand);font-size:18px;line-height:36px}
+.diary p.hook{color:var(--amber)}
+.report{border:1px solid var(--line);border-radius:10px;background:var(--night);overflow:hidden}
+.rp-sec{padding:20px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.rp-sec > small{font-size:var(--fs-cap);color:var(--faint);letter-spacing:.2em}
+.rank{display:flex;gap:18px;align-items:center}
+.medal{flex:none;width:92px;height:92px;border-radius:50%;border:2px solid var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative}
+.medal::after{content:"";position:absolute;inset:5px;border-radius:50%;border:1px solid var(--muted)}
+.medal b{font-family:var(--display);font-weight:900;font-size:24px;letter-spacing:.1em;line-height:1}
+.medal span{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1}
+.rank-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rank-txt small{font-size:var(--fs-cap);color:var(--muted);letter-spacing:.08em}
+.rank-txt strong{font-family:var(--display);font-weight:900;font-size:clamp(21px,5.6vw,28px);line-height:1.4}
+.reveal-box{font-family:var(--mono);font-size:13px;line-height:1.9;background:var(--night-2);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto;white-space:pre}
+.reveal-box .y{color:var(--amber)}
+.reveal-box .n{color:var(--faint)}
+.missed{font-family:var(--hand);font-size:17px;line-height:1.75;border-left:2px solid var(--amber);padding-left:14px}
+.hive{font-size:var(--fs-s);line-height:2;letter-spacing:.08em;color:var(--jade)}
+.note-next{font-family:var(--hand);font-size:18px;border:1px dashed var(--line);border-radius:8px;padding:12px 16px}
+.note-next small{display:block;font-family:var(--body);font-size:var(--fs-cap);color:var(--muted);letter-spacing:.1em}
+
+/* coop, truth, specs */
+.feats{display:grid;gap:14px}
+.feat{border-top:1px solid var(--amber);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+.feat small{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.1em}
+.feat p{color:var(--muted);font-size:var(--fs-s)}
+.truth .prose{font-family:var(--display);font-weight:600;font-size:var(--fs-l);line-height:1.85;max-width:34em}
+.taps{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.taps p{color:var(--muted);font-size:var(--fs-s)}
+.specs{display:grid;grid-template-columns:6em minmax(0,1fr);gap:12px 16px;margin:0}
+.specs dt{color:var(--faint);font-size:var(--fs-s)}
+.specs dd{margin:0}
+.foot .wrap{padding-block:40px 56px;display:flex;flex-direction:column;gap:10px;font-size:var(--fs-cap);color:var(--faint)}
+.foot .logo-en{font-size:26px}
+
+@media (min-width:720px){
+  .hero .wrap{padding-block:96px 56px;min-height:640px}
+  .twin{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 40px}
+  .sandbox{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start}
+  .roles{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start}
+  .nights{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .people{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .feats{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 36px}
+}
+@media (min-width:1000px){
+  .people{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .majors{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .report-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .report-grid .rp-sec:nth-child(odd){border-right:1px solid var(--line)}
+}
+@media (max-width:519px){
+  .keys{grid-template-columns:minmax(0,1fr)}
+  .key{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:14px;row-gap:2px;align-items:start}
+  .key .cap{grid-row:span 2}
+}
+@media (max-width:360px){
+  .majors{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top">熄燈號之後</a>
+    <nav class="nav" aria-label="頁面導覽">
+      <a href="#eve">前夜</a>
+      <a href="#core">玩法</a>
+      <a href="#ability">異能</a>
+      <a href="#roles">角色卡</a>
+      <a href="#survival">生存</a>
+      <a href="#nights">七夜</a>
+      <a href="#partners">夥伴</a>
+      <a href="#diary">日誌</a>
+      <a href="#coop">連線</a>
+      <a href="#specs">資訊</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="top" aria-label="主視覺">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="veil"></div>
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="stack" style="gap:8px">
+        <div class="logo-en">AFTER TAPS</div>
+        <div class="codename">PROJECT DOOM ／ 概念預覽</div>
+      </div>
+      <p class="tagline"><span>你只是來警察大學</span><span>當演習志工的普通大學生。</span><span>中午十二點，<em>天會裂開</em>。</span><span>你知道，</span><span>因為你已經死過一次。</span></p>
+      <div class="clock">
+        <span>距離交融波</span>
+        <b class="mono" id="clock">04:30:00</b>
+      </div>
+      <div class="ctas">
+        <a class="btn primary" href="#ability">試玩一鍵異能</a>
+        <a class="btn" href="#roles">抽一張角色卡</a>
+      </div>
+      <p class="meta-line"><span>俯視角合作生存</span><span>1–4 人連線</span><span>PC</span></p>
+    </div>
+    <h1>熄燈號之後</h1>
+  </div>
+</section>
+
+<section class="band" id="eve">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">前夜　07:30–12:00</span>
+      <h2><span class="nw">同一天，</span><span class="nw">你會過很多次</span></h2>
+      <p class="lede">國立鷹嶺警官學院每年都會舉辦防災演習，找附近的大學生來扮演民眾和傷患。你和朋友一起報了名。</p>
+    </div>
+    <div class="seg" role="group" aria-label="切換輪次">
+      <button type="button" aria-pressed="true" data-loop="1">第一輪</button>
+      <button type="button" aria-pressed="false" data-loop="2" class="warm">第二輪以後</button>
+    </div>
+    <div id="loop1" class="stack" style="gap:22px">
+      <p class="lede">第一輪沒有倒數。你以為自己只是來打工的。演習流程，就是新手教學。</p>
+      <ol class="log">
+        <li><span class="t">07:30</span><p>報到，抽演習角色卡。<small>移動、互動、和人說話</small></p></li>
+        <li><span class="t">08:30</span><p>疏散演練：把「傷患」抬到集合點。<small>兩人合抬、推車</small></p></li>
+        <li><span class="t">09:30</span><p>消防演練：滅火器。<small>道具的使用</small></p></li>
+        <li><span class="t">10:30</span><p>封鎖演練：架拒馬、封住門口。<small>據點的防線怎麼蓋</small></p></li>
+        <li><span class="t">11:50</span><p>鳥群在田徑場上空繞圈。手機沒有訊號。門把電了你一下。<small>你這一輪異能的線索</small></p></li>
+        <li><span class="t">12:00</span><p>演習警報準時響起。然後天空裂開了。廣播裡，區隊長說：「這不是演習。」</p></li>
+      </ol>
+    </div>
+    <div id="loop2" class="stack" style="gap:22px" hidden>
+      <div class="countbar"><span>你醒來時，畫面上多了一行字</span><b id="eveClock">04:30:00</b></div>
+      <ol class="log">
+        <li><span class="t">07:30</span><p>在校車上醒來。你記得上一輪死在第二夜。</p></li>
+        <li><span class="t">08:10</span><p>你對區隊長說：「十點十五分，行政大樓會停電。」他沒理你。<small>預言：說中一件事，NPC 就會相信你</small></p></li>
+        <li><span class="t">10:15</span><p>停電了。區隊長看著你很久，把械彈庫的一把鑰匙交給你。</p></li>
+        <li><span class="t">11:20</span><p>你用福利社的推車搬走兩箱泡麵和一台發電機。<small>可疑度八成：再多就會被帶去保健室「休息」</small></p></li>
+        <li><span class="t">12:00</span><p>交融波。這一次，你們已經在射擊館裡，門已經封好了。</p></li>
+      </ol>
+      <div class="memo">
+        <header><span>生存日誌　記憶頁</span><span class="mono">第 3 輪</span></header>
+        <ul>
+          <li>10:15，行政大樓會停電一次，大約五分鐘。</li>
+          <li>福利社後門的密碼是 0742。</li>
+          <li>區隊長的女兒今天生日。他聽到這件事，就會相信你。</li>
+          <li class="wrong"><s>13:40，拾骸者會從游泳池的排水口爬出來。</s><em>這一輪不一樣。</em></li>
+        </ul>
+      </div>
+      <p class="lede">記憶有用，但不可靠。交融之後世界會分歧：前夜大約八成會照你記得的發生，到第五天以後只剩三成多。</p>
+    </div>
+    <div class="chapter"><small>每一輪的第一章</small><strong>天亮之前，再一次</strong></div>
+  </div>
+</section>
+
+<section class="band alt" id="core">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">玩法</span>
+      <h2><span class="nw">上手三十秒，</span><span class="nw">每一輪都不一樣</span></h2>
+      <p class="lede">斜 45 度俯視角的合作生存。白天出去搜刮、救人，晚上守住據點，撐過七天七夜。死了就重生回 07:30。</p>
+    </div>
+    <div class="keys">
+      <div class="key"><span class="cap">移動</span><b>移動</b><p>武器會自動攻擊最近的蟲。你只要決定站在哪裡。</p></div>
+      <div class="key"><span class="cap">E</span><b>互動</b><p>撿、開、搬、修、救人、說服，都是同一顆鍵。</p></div>
+      <div class="key"><span class="cap ab">？</span><b>異能</b><p>按一下釋放，按住蓄力。條件對了，威力翻倍。</p></div>
+    </div>
+    <div class="twin">
+      <div class="joy">
+        <small>爽點一</small>
+        <h3>異能：「原來是這樣！」</h3>
+        <ul>
+          <li>每找到一個隱藏條件，異能就當場進化，畫面定格。</li>
+          <li>條件成立時，威力 ×3。雷系去淋雨，影系等停電，重力系往高處跳。</li>
+          <li>三個條件都找到，還有一個不會發光的祕密條件：清場大招。</li>
+        </ul>
+      </div>
+      <div class="joy">
+        <small>爽點二</small>
+        <h3>生存：「我們撐過來了」</h3>
+        <ul>
+          <li>白天決定冒險多深：多搬一台發電機，還是趕在黃昏鐘響前回家。</li>
+          <li>晚上看著自己蓋的防線擋住第一波，最後一波開大招。</li>
+          <li>早上的生存日誌告訴你：昨晚又多活了一天、多救了三個人。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="stack" style="gap:10px">
+      <span class="eyebrow">每一輪都會變</span>
+      <div class="vary">
+        <span>異能本源<b>16</b></span><span>隱藏條件<b>30</b></span><span>角色卡<b>6</b></span><span>主修<b>10</b></span><span>據點<b>5</b></span><span>天氣災害<b>8</b></span><span>夜晚威脅<b>8 選 5</b></span><span>裂隙位置<b>5</b></span><span>Boss<b>3</b></span><span>物品詞綴<b>0–2</b></span><span>夥伴命運</span><span>校園傳說</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="ability">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">一鍵異能</span>
+      <h2><span class="nw">沒有人告訴你，</span><span class="nw">你的能力是什麼</span></h2>
+      <p class="lede">選一個地方站好，然後按下異能鍵。按鈕越亮，代表你越接近一個隱藏條件。找到三個條件，異能就會進化三次。</p>
+    </div>
+    <div class="sandbox">
+      <div class="stage">
+        <div class="ab-name" id="abName">異能：<b>？？？</b></div>
+        <button class="ab-btn" id="abBtn" type="button" aria-label="按下異能鍵">？</button>
+        <div class="pips" aria-label="已發現的條件"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip secret" title="祕密條件"></span></div>
+        <div class="heat"><span>過熱</span><div class="track"><i id="heat"></i></div></div>
+        <div class="freeze-line" id="freeze" aria-hidden="true"></div>
+      </div>
+      <div class="controls">
+        <div class="pick">
+          <span>你現在在哪裡、在做什麼</span>
+          <div class="chips" id="sits"></div>
+        </div>
+        <ul class="feed" id="feed" aria-live="polite"></ul>
+        <div class="row-btns">
+          <button class="btn small" id="reroll" type="button">下一輪（重抽異能）</button>
+          <button class="btn small" id="showAns" type="button" aria-expanded="false">看答案</button>
+        </div>
+        <div class="answer" id="answer" hidden></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="roles">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">演習角色卡與主修</span>
+      <h2><span class="nw">你今天的工作是</span><span class="nw">……當屍體？</span></h2>
+      <p class="lede">報到時，每位志工都會抽到一張演習角色卡。它決定你從哪裡開始、手上有什麼。主修則由你自己選。</p>
+    </div>
+    <div class="roles">
+      <div class="stack" style="gap:14px">
+        <article class="rolecard" id="roleCard"></article>
+        <div><button class="btn primary" id="drawRole" type="button">抽一張角色卡</button></div>
+      </div>
+      <div class="stack" style="gap:10px">
+        <h3>主修（十選一）</h3>
+        <ul class="majors">
+          <li><b>資工</b>駭入電子門、監視器、無人機</li>
+          <li><b>護理</b>救起隊友的速度加倍</li>
+          <li><b>機械</b>砲台與陷阱材料減半</li>
+          <li><b>化工</b>調配汽油彈與驅蟲劑</li>
+          <li><b>體育</b>衝刺更久，一個人搬重物</li>
+          <li><b>餐飲</b>據點糧食效率 +50%</li>
+          <li><b>電機</b>發電機效率加倍、架電網</li>
+          <li><b>生科</b>作物長更快、解剖找弱點</li>
+          <li><b>戲劇</b>說服 NPC、裝死引開蟲</li>
+          <li><b>中文</b>生存日誌多寫一句提示</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="survival">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">生存</span>
+      <h2>只要看懂<span class="nw">四個數字</span></h2>
+      <p class="lede">你自己只有血和體力。飢餓、口渴、睡眠全部交給據點。每天早上自動結算，生存日誌會寫一句結果。以下是第四天早上的範例。</p>
+    </div>
+    <div class="stats" aria-label="第四天早上的據點狀態（範例）">
+      <div class="stat low"><small>糧</small><b>11</b><span>泡麵還剩十一包，每人每天吃一份</span></div>
+      <div class="stat"><small>電</small><b>2 晚</b><span>夜裡的燈和電網要靠它</span></div>
+      <div class="stat"><small>材</small><b>34</b><span>蓋防線、修門窗</span></div>
+      <div class="stat"><small>人</small><b>9</b><span>每人每天做一份工作</span></div>
+    </div>
+    <div class="split">
+      <div class="stack" style="gap:16px">
+        <h3>選一座據點</h3>
+        <div class="seg" role="group" aria-label="切換據點狀態">
+          <button type="button" aria-pressed="true" data-mode="day">演習中</button>
+          <button type="button" aria-pressed="false" data-mode="doom" class="warm">交融後</button>
+        </div>
+        <div class="locs" id="locs"></div>
+      </div>
+      <div class="stack" style="gap:16px">
+        <h3>每天抽一種災害</h3>
+        <p class="lede">災害會和異能連動。同一場暴雨，對雷系是福音，對火系是災難。</p>
+        <ul class="weather">
+          <li><b>暴雨</b><span>視野降低，火焰減弱</span><em>雷・水</em></li>
+          <li><b>停電</b><span>據點沒電，夜裡全黑</span><em>影</em></li>
+          <li><b>孢子霧</b><span>視野極差，待太久會中毒</span><em>風・生</em></li>
+          <li><b>酷熱</b><span>體力消耗加倍，食物腐壞</span><em>火・寒</em></li>
+          <li><b>斷水</b><span>糧的消耗加倍</span><em>水</em></li>
+          <li><b>低重力潮汐</b><span>每半分鐘一次低重力</span><em>重</em></li>
+          <li><b>赤月</b><span>蟲狂暴，異能也 ×2</span><em>所有人</em></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="nights">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">七夜</span>
+      <h2><span class="nw">每一夜，</span><span class="nw">都是新的問題</span></h2>
+      <p class="lede">難度不是靠蟲變多、血變厚。第一夜和第七夜固定，中間五夜從八種威脅中抽出，順序每輪都不一樣。</p>
+    </div>
+    <ol class="nights" id="nightList"></ol>
+    <div><button class="btn primary" id="shuffleNights" type="button">重抽第二～六夜</button></div>
+    <div class="stack" style="gap:12px">
+      <h3>第七夜的 Boss</h3>
+      <p class="lede">三選一，由蟲族依你這一輪的打法選出。</p>
+      <ul class="bosses">
+        <li><b>千眼之母</b><span>裂隙的錨。會把被擄走的人當盾牌，先救人才能打。</span></li>
+        <li><b>鏡后</b><span>複製你這一輪發現過的所有異能形態。她也繼承了你的弱點。</span></li>
+        <li><b>蛹王</b><span>被寄生的區隊長，用警察的戰術對付你。研究出解藥，就能救回他。</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="partners">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">夥伴</span>
+      <h2><span class="nw">他們受過訓練，</span><span class="nw">你身上有異能</span></h2>
+      <p class="lede">救回來的人會成為夥伴。他們也有自己的隱藏異能：把他們帶到條件附近，他們頭上的光也會亮。</p>
+    </div>
+    <div class="people">
+      <article class="person"><header><h4>嚴振東</h4><span>區隊長・演習總指揮</span></header><q>這不是演習。</q><p>持有械彈庫的鑰匙，只相信說中過一件事的人。</p></article>
+      <article class="person"><header><h4>陳硯</h4><span>警校四年級・帶隊學長</span></header><q>你們先走，我站最後一班哨。</q><p>最可靠的戰鬥夥伴。</p></article>
+      <article class="person"><header><h4>林知夏</h4><span>警校鑑識系</span></header><q>給我一隻完整的，我就告訴你牠的弱點。</q><p>解剖蟲屍，全隊都看得到弱點。</p></article>
+      <article class="person"><header><h4>許安</h4><span>警校新生</span></header><q>學長，鳥是不是不應該這樣飛？</q><p>異能常常很強，但會失控。</p></article>
+      <article class="person"><header><h4>杜子豪「豆漿」</h4><span>你的大學室友</span></header><q>又是吃的？</q><p>他的異能幾乎每一輪都跟食物有關。</p></article>
+      <article class="person"><header><h4>方晴</h4><span>健康中心護理師</span></header><q>躺好，不要動。</q><p>醫護站效率加倍。</p></article>
+      <article class="person"><header><h4>阿月姨</h4><span>福利社老闆娘</span></header><q>我這輩子運氣都很好啊，怎麼了？</q><p>她的異能是運氣，但她自己不知道。</p></article>
+      <article class="person"><header><h4>小八</h4><span>警犬</span></header><q>（牠沒有叫。牠只是擋在你前面。）</q><p>嗅得出門外的是不是人。</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="diary">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">生存日誌</span>
+      <h2><span class="nw">每天早上，</span><span class="nw">都有一頁小說</span></h2>
+      <p class="lede">遊戲會把昨天發生的事寫成三到五句話。一輪結束時，日誌會變成一份結算報告，連你沒發現的條件也會一起揭曉。</p>
+    </div>
+    <div class="diary">
+      <header><span>生存日誌</span><span class="mono">#0742-3B91</span></header>
+      <h4>第四天</h4>
+      <p>昨天許安讓整座游泳池結了冰。蟲過不了水，他第一次笑了。</p>
+      <p>泡麵還剩十一包，發電機的油夠撐兩晚。</p>
+      <p>陳硯說：「明天我去醫院。我一個人去就好。」</p>
+      <p class="hook">晚上的時候，排水口裡有東西在敲。</p>
+    </div>
+    <article class="report">
+      <div class="report-grid">
+        <div class="rp-sec">
+          <small>評級與稱號</small>
+          <div class="rank">
+            <div class="medal" aria-label="評級警正，A"><b>警正</b><span>A・七夜</span></div>
+            <div class="rank-txt"><small>第 3 輪　黑票・罹難者　戲劇系</small><strong>躺著撐過第一夜的人</strong></div>
+          </div>
+        </div>
+        <div class="rp-sec">
+          <small>異能揭曉</small>
+<div class="reveal-box">逆雷（雷）　真名：蒼淵雷獸「夔」
+<span class="y">✔ 碰到金屬　　→ 導雷　　（D1 13:05）</span>
+<span class="y">✔ 在雨中　　　→ 連鎖閃電（D2 10:40）</span>
+<span class="n">✘ 在發電機旁　→ 充電</span>
+<span class="n">✘ 祕密：剛衝刺完、心跳最快時</span></div>
+          <p class="missed">你其實差一點：第三夜你衝回據點時，就站在發電機旁。你按的是互動鍵。</p>
+        </div>
+        <div class="rp-sec">
+          <small>蟲族的評價</small>
+          <p class="hive">樣本 03-黑。牠躺著不動，我們以為牠已經死了。牠不是。我們學會了，先咬不動的。</p>
+        </div>
+        <div class="rp-sec">
+          <small>給下一輪的記憶</small>
+          <p class="note-next"><small>你寫下的話，會出現在下一輪的某個角落</small>不要相信下雨天敲門的人。除非小八沒有叫。</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="band" id="coop">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">連線</span>
+      <h2><span class="nw">和朋友一起報名，</span><span class="nw">一起重來</span></h2>
+    </div>
+    <div class="feats">
+      <div class="feat"><small>1–4 人合作</small><h3>連自己都不知道，隊友更不知道</h3><p>「欸，你走到水邊的時候，按鈕是不是有發光？」溝通本身就是玩法。任何一個人頓悟，全隊畫面一起定格。</p></div>
+      <div class="feat"><small>共鳴</small><h3>兩個人一起按</h3><p>兩種本源在 5 公尺內相遇，會發生合理又意外的事：雷加水是雷雨陣，火加風是火旋，光加影是日蝕。</p></div>
+      <div class="feat"><small>倒地不出局</small><h3>最壞就是等到天亮</h3><p>隊友可以把你扛回據點。沒人來救，你會在下一個早晨醒來，只是背包掉在外面了。</p></div>
+      <div class="feat"><small>每天早上自動存檔</small><h3>朋友約得到</h3><p>一輪約 70–80 分鐘，可以分幾個晚上玩完。另有 35 分鐘的三夜模式。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt truth" id="truth">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">真相</span>
+      <h2>為什麼是這座學校？</h2>
+    </div>
+    <p class="prose">每天晚上二十二點三十分，學院的廣播系統都會播放熄燈號。這個傳統已經延續了五十年，沒有人記得原因。交融波發生的那天，它已經三天沒有響了。</p>
+    <p class="prose">每一輪，你都可能找到一片真相：1972 年的那場小疊合、校史館裡的黑鐵印、忠勇牆上空白的七格。集滿之後，你就能在十二點之前，阻止這一天。</p>
+    <div class="taps">
+      <button class="btn" id="tapsBtn" type="button" aria-pressed="false">▶ 播放熄燈號</button>
+      <p>需要開啟聲音</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="specs">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">遊戲資訊</span>
+      <h2>規格</h2>
+    </div>
+    <dl class="specs">
+      <dt>類型</dt><dd>俯視角 3D 合作生存、Roguelite、異能動作</dd>
+      <dt>操作</dt><dd>移動（自動攻擊）、互動、異能，三顆鍵</dd>
+      <dt>人數</dt><dd>單人（AI 夥伴同行）或 1–4 人連線合作</dd>
+      <dt>一輪</dt><dd>約 70–80 分鐘；三夜模式約 35 分鐘；每天早上自動存檔</dd>
+      <dt>平台</dt><dd>PC（Steam），Switch 與手機規劃中</dd>
+      <dt>語言</dt><dd>繁體中文，英文與日文規劃中</dd>
+      <dt>分級</dt><dd>12+，提供蟲恐懼友善模式</dd>
+    </dl>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="logo-en">AFTER TAPS</div>
+    <p>《熄燈號之後》概念預覽　·　專案代號 DOOM</p>
+    <p>本作所有校名、地名、人名與事件皆為虛構，與現實中的學校、機關及人物無關。</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce=false;
+  try{ reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+  function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function shuffle(arr){ var a=arr.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  /* ---------- hero sky ---------- */
+  (function sky(){
+    var cv=document.getElementById("sky"); if(!cv||!cv.getContext) return;
+    var ctx=cv.getContext("2d");
+    var W=0,H=0,ox=0,oy=0,cracks=[],motes=[],MR=null,maxEnd=0,start=performance.now(),raf=0,visible=true,staticLayer=null,dpr=1,buildings=[];
+    function build(){
+      var r=cv.getBoundingClientRect(); W=Math.max(1,r.width); H=Math.max(1,r.height);
+      dpr=Math.min(2,window.devicePixelRatio||1);
+      cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
+      ox=W*(W<640?0.62:0.52); oy=H*(W<640?0.09:0.14); staticLayer=null;
+      var R=mulberry(742); cracks=[]; maxEnd=0;
+      var L=Math.max(W,H)*(W<640?0.42:0.5);
+      function br(x,y,a,len,dep,t0){
+        var n=7+Math.floor(R()*5), pts=[[x,y]], px=x, py=y, ang=a;
+        for(var i=0;i<n;i++){ ang+=(R()-.5)*.8; var s=len/n*(.6+R()*.8); px+=Math.cos(ang)*s; py+=Math.sin(ang)*s; pts.push([px,py]); }
+        var c={pts:pts,w:Math.max(.5,2.4-dep*.6),t0:t0,dur:.55+R()*.45,dep:dep}; cracks.push(c); maxEnd=Math.max(maxEnd,t0+c.dur);
+        if(dep<3){ var k=dep===0?3:1+Math.floor(R()*2); for(var j=0;j<k;j++){ var idx=2+Math.floor(R()*(pts.length-3)); br(pts[idx][0],pts[idx][1],ang+(R()-.5)*2,len*(.35+R()*.3),dep+1,t0+.3+R()*.4); } }
+      }
+      for(var i=0;i<8;i++){ br(ox,oy,i/8*Math.PI*2+R()*.6,L*(.55+R()*.6),0,.2+R()*.25); }
+      MR=mulberry(1972);
+      var count=Math.round(Math.min(150,W*H/6500)); motes=[];
+      for(var m=0;m<count;m++) motes.push(spawn(true));
+      var B=mulberry(1949); buildings=[];
+      var spec=[[.02,.11,.06,"dorm"],[.14,.09,.08,"dorm"],[.25,.07,.05,"dorm"],[.36,.13,.07,"hall"],[.53,.025,.19,"tower"],[.6,.08,.045,"dorm"],[.7,.05,.13,"water"],[.78,.08,.05,"dorm"]];
+      for(var b=0;b<spec.length;b++){ var s2=spec[b]; var bw=Math.max(14,s2[1]*W), bh=Math.max(12,s2[2]*H*1.3); var win=[]; if(s2[3]==="dorm"||s2[3]==="hall"){ for(var q=0;q<10;q++){ if(B()<.55) win.push([B(),B()]); } } buildings.push({x:s2[0]*W,w:bw,h:bh,type:s2[3],win:win}); }
+    }
+    function spawn(initial){
+      var R=MR; var p={x:ox+(R()-.5)*W*.12,y:oy+(R()-.5)*14,vx:(R()-.5)*.6,vy:.12+R()*.5,ph:R()*6.28,s:.8+R()*1.4};
+      if(initial){ var k=R(); p.x+=p.vx*k*500; p.y+=p.vy*k*500; }
+      return p;
+    }
+    function drawSky(c,p){
+      var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#060a10"); g.addColorStop(.6,"#0d1520"); g.addColorStop(1,"#141e2b");
+      c.fillStyle=g; c.fillRect(0,0,W,H);
+      var grow=Math.min(1,p/2.4); var rad=Math.max(W,H)*(.15+.75*grow);
+      var bloom=c.createRadialGradient(ox,oy,0,ox,oy,rad); bloom.addColorStop(0,"rgba(107,174,159,.20)"); bloom.addColorStop(.5,"rgba(107,174,159,.06)"); bloom.addColorStop(1,"rgba(107,174,159,0)");
+      c.fillStyle=bloom; c.fillRect(0,0,W,H);
+      c.lineCap="round"; c.lineJoin="round";
+      for(var i=0;i<cracks.length;i++){
+        var cr=cracks[i]; var f=(p-cr.t0)/cr.dur; if(f<=0) continue; if(f>1) f=1;
+        var pts=cr.pts, n=pts.length-1, upto=f*n, whole=Math.floor(upto), part=upto-whole;
+        c.beginPath(); c.moveTo(pts[0][0],pts[0][1]);
+        for(var j=1;j<=whole;j++) c.lineTo(pts[j][0],pts[j][1]);
+        if(whole<n&&part>0){ var a=pts[whole],b=pts[whole+1]; c.lineTo(a[0]+(b[0]-a[0])*part,a[1]+(b[1]-a[1])*part); }
+        c.strokeStyle="rgba(4,7,12,.75)"; c.lineWidth=cr.w*4.5; c.stroke();
+        c.strokeStyle="rgba(233,166,64,"+(0.22/(1+cr.dep))+")"; c.lineWidth=cr.w*3; c.stroke();
+        c.strokeStyle="rgba(255,214,150,"+Math.max(.18,.85-cr.dep*.2)+")"; c.lineWidth=cr.w*.7; c.stroke();
+      }
+    }
+    function drawSeam(t){
+      var pulse=.75+.25*Math.sin(t/700);
+      var g=ctx.createRadialGradient(ox,oy,0,ox,oy,46); g.addColorStop(0,"rgba(255,222,170,"+(.9*pulse)+")"); g.addColorStop(.25,"rgba(233,166,64,"+(.45*pulse)+")"); g.addColorStop(1,"rgba(233,166,64,0)");
+      ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(ox,oy,10,46,0,0,Math.PI*2); ctx.fill();
+    }
+    function drawCampus(){
+      var base=H*0.86;
+      ctx.fillStyle="#04070c";
+      ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(0,base); ctx.lineTo(W*.86,base); ctx.lineTo(W*.9,base+H*.03); ctx.lineTo(W*.95,base+H*.07); ctx.lineTo(W,base+H*.09); ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+      for(var i=0;i<buildings.length;i++){
+        var b=buildings[i], top=base-b.h;
+        ctx.fillStyle="#04070c";
+        if(b.type==="tower"){ ctx.fillRect(b.x,top,b.w,b.h); ctx.beginPath(); ctx.moveTo(b.x-2,top); ctx.lineTo(b.x+b.w/2,top-b.w*1.4); ctx.lineTo(b.x+b.w+2,top); ctx.fill(); ctx.fillStyle="rgba(233,166,64,.55)"; ctx.beginPath(); ctx.arc(b.x+b.w/2,top+b.w*.9,b.w*.28,0,Math.PI*2); ctx.fill(); }
+        else if(b.type==="water"){ var tw=b.w, th=b.h*.35; ctx.fillRect(b.x+tw*.2,top+th,2,b.h-th); ctx.fillRect(b.x+tw*.8-2,top+th,2,b.h-th); ctx.fillRect(b.x,top,tw,th); ctx.beginPath(); ctx.ellipse(b.x+tw/2,top,tw/2,th*.25,0,Math.PI,0); ctx.fill(); }
+        else if(b.type==="hall"){ ctx.fillRect(b.x,top,b.w,b.h); ctx.beginPath(); ctx.moveTo(b.x-4,top); ctx.lineTo(b.x+b.w/2,top-b.h*.45); ctx.lineTo(b.x+b.w+4,top); ctx.fill(); }
+        else { ctx.fillRect(b.x,top,b.w,b.h); }
+        for(var w=0;w<b.win.length;w++){ ctx.fillStyle="rgba(230,214,170,.28)"; ctx.fillRect(b.x+3+b.win[w][0]*(b.w-8),top+4+b.win[w][1]*(b.h-10),2.5,2.5); }
+      }
+      var fx=W*.475, fy=base-H*.2;
+      ctx.fillStyle="#04070c"; ctx.fillRect(fx-1,fy,2,base-fy);
+      var ang=Math.atan2(oy-fy,ox-fx), len=Math.max(18,W*.035), wid=len*.6;
+      var ux=Math.cos(ang), uy=Math.sin(ang), nx=-uy, ny=ux;
+      ctx.fillStyle="#1c2734"; ctx.beginPath(); ctx.moveTo(fx,fy+1); ctx.lineTo(fx+ux*len,fy+1+uy*len); ctx.lineTo(fx+ux*len+nx*wid*.9,fy+1+uy*len+ny*wid*.9); ctx.lineTo(fx+nx*wid,fy+1+ny*wid); ctx.closePath(); ctx.fill();
+    }
+    function frame(now){
+      var p=reduce?99:(now-start)/1000;
+      if(p>maxEnd+.1){
+        if(!staticLayer){ staticLayer=document.createElement("canvas"); staticLayer.width=cv.width; staticLayer.height=cv.height; var sc=staticLayer.getContext("2d"); sc.setTransform(dpr,0,0,dpr,0,0); drawSky(sc,99); }
+        ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(staticLayer,0,0); ctx.setTransform(dpr,0,0,dpr,0,0);
+      } else { drawSky(ctx,p); }
+      drawSeam(now);
+      for(var i=0;i<motes.length;i++){
+        var m=motes[i];
+        if(!reduce){ m.x+=m.vx; m.y+=m.vy; m.vx+=(MR()-.5)*.04; if(m.y>H*.88||m.x<-10||m.x>W+10) motes[i]=m=spawn(false); }
+        var a=reduce?.7:(.45+.55*Math.abs(Math.sin(m.ph+now/260)));
+        ctx.fillStyle="rgba(240,180,80,"+a.toFixed(3)+")"; ctx.fillRect(m.x,m.y,m.s,m.s);
+      }
+      drawCampus();
+      if(!reduce&&visible) raf=requestAnimationFrame(frame);
+    }
+    function run(){ cancelAnimationFrame(raf); raf=requestAnimationFrame(frame); }
+    build(); run();
+    var rt=0; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ build(); run(); },150); });
+    if("IntersectionObserver" in window){ new IntersectionObserver(function(es){ visible=es[0].isIntersecting; if(visible&&!reduce) run(); }).observe(cv); }
+  })();
+
+  /* ---------- countdown to 12:00 ---------- */
+  (function(){
+    var a=document.getElementById("clock"), b=document.getElementById("eveClock");
+    var total=4*3600+30*60, t0=Date.now();
+    function pad(n){ return n<10?"0"+n:""+n; }
+    function tick(){ var left=Math.max(0,total-Math.floor((Date.now()-t0)/1000)); var s=pad(Math.floor(left/3600))+":"+pad(Math.floor(left%3600/60))+":"+pad(left%60); if(a) a.textContent=s; if(b) b.textContent=s; }
+    setInterval(tick,1000);
+  })();
+
+  /* ---------- loop toggle ---------- */
+  (function(){
+    var seg=document.querySelector("#eve .seg"), p1=document.getElementById("loop1"), p2=document.getElementById("loop2");
+    seg.addEventListener("click",function(e){
+      var b=e.target.closest("button"); if(!b) return;
+      seg.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); });
+      var two=b.getAttribute("data-loop")==="2"; p1.hidden=two; p2.hidden=!two;
+    });
+  })();
+
+  /* ---------- one-button ability sandbox ---------- */
+  (function(){
+    var SITS=[["open","空地"],["puddle","水窪旁"],["rain","雨中"],["rail","握住鐵欄杆"],["gen","發電機旁"],["shade","陰影裡"],["dark","停電的走廊"],["hand","拉著隊友的手"],["still","靜止三秒"],["hurt","受了重傷"],["dash","剛衝刺完"]];
+    var LABEL={}; SITS.forEach(function(s){ LABEL[s[0]]=s[1]; });
+    var ABIL=[
+      {name:"逆雷",src:"雷",spark:"一道細細的電弧從指尖跳出去，打中最近的一隻蟲。",strong:"電弧變粗了，一次打穿三隻。",
+       conds:[
+        {s:"rail",near:{gen:.4},form:"導雷",line:"你握住欄杆的那一刻，整排鐵欄杆都亮了。",res:"鐵欄杆上的蟲全部被電得冒煙。"},
+        {s:"rain",near:{puddle:.5},form:"連鎖閃電",line:"雨落下來的地方，都是你的。",res:"閃電沿著雨水一路跳，十隻蟲同時倒下。"},
+        {s:"gen",near:{rail:.4,dark:.3},form:"充電",star:true,line:"發電機的指針一路轉到底。今晚的燈不會熄了。",res:"據點的「電」又滿了。"}],
+       secret:{s:"dash",riddle:"夔只在心跳最快的時候回頭。",title:"蒼淵雷獸「夔」",line:"你的心跳和雷聲，變成了同一個節拍。"}},
+      {name:"懸雨",src:"水",spark:"一顆水珠從掌心彈出去，打在蟲的殼上。",strong:"水珠變成一串，連續打了五下。",
+       conds:[
+        {s:"puddle",near:{rain:.5},form:"懸停",line:"水窪裡的水，慢慢浮了起來。",res:"周圍的水停在半空，蟲穿過時慢得像在游泳。"},
+        {s:"still",near:{open:.15,shade:.15},form:"水彈陣",line:"你停下來的時候，水也停下來等你。",res:"懸停的水珠一起射了出去。"},
+        {s:"rain",near:{puddle:.5},form:"集雨",star:true,line:"每一滴雨都往據點的水桶裡落。",res:"據點的斷水災害，今天不算數了。"}],
+       secret:{s:"hurt",riddle:"雨師只在有人流血的時候現身。",title:"蒼淵「雨師」",line:"你的血停在半空中，變成了一面水盾。"}},
+      {name:"影步",src:"影",spark:"你的身體變得半透明，最近的那隻蟲停下來，找不到你。",strong:"半透明的時間變長了，蟲群從你身邊走過去。",
+       conds:[
+        {s:"shade",near:{dark:.6},form:"影中瞬移",line:"原來你一直都住在影子裡。",res:"你從一片陰影，跳到了十公尺外的另一片陰影。"},
+        {s:"hand",near:{},form:"同行",line:"你拉著的那隻手，也一起沉進了影子。",res:"你把隊友一起帶進了陰影。"},
+        {s:"dark",near:{shade:.6},form:"夜行",star:true,line:"停電的那一刻，整棟樓都變成了你的走廊。",res:"據點裡的陰影全連在一起，夥伴不再怕黑。"}],
+       secret:{s:"still",riddle:"夜行狸只在你停下來的時候追上你。",title:"蒼淵「夜行狸」",line:"所有的影子，同時轉過頭來看著你。"}}
+    ];
+    var idx=Math.floor(Math.random()*ABIL.length), found, awake, sit="open", heat=0, freezeT=0;
+    var btn=document.getElementById("abBtn"), name=document.getElementById("abName"), feed=document.getElementById("feed"), heatI=document.getElementById("heat"), fz=document.getElementById("freeze"), pips=document.querySelectorAll(".stage .pip"), ans=document.getElementById("answer"), ansBtn=document.getElementById("showAns"), sitsEl=document.getElementById("sits");
+    SITS.forEach(function(s){ var c=el("button","chip",s[1]); c.type="button"; c.setAttribute("data-s",s[0]); c.setAttribute("aria-pressed",s[0]===sit?"true":"false"); sitsEl.appendChild(c); });
+    sitsEl.addEventListener("click",function(e){ var c=e.target.closest(".chip"); if(!c) return; sit=c.getAttribute("data-s"); sitsEl.querySelectorAll(".chip").forEach(function(x){ x.setAttribute("aria-pressed",x===c?"true":"false"); }); updateGlow(); });
+    function A(){ return ABIL[idx]; }
+    function nFound(){ return found.filter(Boolean).length; }
+    function glow(){ var g=0, a=A(); a.conds.forEach(function(c,i){ if(found[i]) return; var v=c.s===sit?1:(c.near[sit]||0); if(v>g) g=v; }); return g; }
+    function updateGlow(){ var g=glow(); btn.style.setProperty("--g",g.toFixed(2)); btn.classList.toggle("hot",g>=.99&&!reduce); }
+    function push(html,cls){ var li=el("li",cls||""); li.innerHTML=html; feed.insertBefore(li,feed.firstChild); while(feed.children.length>4) feed.removeChild(feed.lastChild); }
+    function showFreeze(line,sub){ fz.innerHTML=esc(line)+(sub?"<small>"+esc(sub)+"</small>":""); fz.classList.add("show"); clearTimeout(freezeT); freezeT=setTimeout(function(){ fz.classList.remove("show"); },reduce?2600:2000); }
+    function renderPips(){ for(var i=0;i<3;i++) pips[i].classList.toggle("on",!!found[i]); pips[3].classList.toggle("on",awake); }
+    function renderAnswer(){
+      var a=A(), lines=[a.name+"（"+a.src+"）　真名："+a.secret.title];
+      a.conds.forEach(function(c,i){ lines.push((found[i]?"✔ ":"✘ ")+LABEL[c.s]+"　→ "+c.form+(c.star?"　★據點":"")); });
+      lines.push((awake?"✔ ":"✘ ")+"祕密："+LABEL[a.secret.s]+"　→ 覺醒");
+      ans.textContent=lines.join("\n");
+    }
+    function reset(){
+      found=[false,false,false]; awake=false; heat=0;
+      name.innerHTML="異能：<b>？？？</b>"; btn.textContent="？";
+      feed.innerHTML=""; push("新的一輪。先站在空地上，按下異能鍵試試看。");
+      renderPips(); renderAnswer(); updateGlow(); heatI.style.width="0%";
+    }
+    btn.addEventListener("click",function(){
+      var a=A();
+      heat+=18;
+      if(heat>=100){ heat=0; heatI.style.width="0%"; push("<b>暴走</b>過熱了！異能往四面八方亂射三秒，蟲和你身邊的箱子一起被炸飛。"); return; }
+      heatI.style.width=Math.min(100,heat)+"%";
+      if(btn.textContent==="？") btn.textContent="！";
+      if(a.secret.s===sit&&nFound()===3&&!awake){
+        awake=true; renderPips(); name.innerHTML="異能：<b>"+esc(a.name)+"（"+esc(a.src)+"）</b>";
+        showFreeze(a.secret.line,"覺醒　"+a.secret.title);
+        push("<b>覺醒</b>"+esc(a.secret.title)+"。清場級的大招，一夜可以用一次。","awake"); renderAnswer(); updateGlow(); return;
+      }
+      for(var i=0;i<3;i++){
+        var c=a.conds[i];
+        if(c.s!==sit) continue;
+        if(!found[i]){
+          found[i]=true; renderPips(); showFreeze(c.line,"頓悟　"+c.form);
+          push("<b>頓悟</b>"+esc(c.form)+"。"+esc(c.res)+(c.star?"（★ 這次進化幫到了據點）":""));
+          if(nFound()===3) push("<b>日誌</b>生存日誌多了一句話：「"+esc(a.secret.riddle)+"」");
+        } else {
+          push("<b>共振 ×3</b>"+esc(c.res));
+        }
+        renderAnswer(); updateGlow(); return;
+      }
+      var g=glow();
+      push(esc(nFound()?a.strong:a.spark)+(g>=.3?"　按鈕亮了一點，好像很接近了。":""));
+      updateGlow();
+    });
+    setInterval(function(){ if(heat>0){ heat=Math.max(0,heat-1.5); heatI.style.width=heat+"%"; } },200);
+    document.getElementById("reroll").addEventListener("click",function(){ var n; do{ n=Math.floor(Math.random()*ABIL.length); }while(n===idx); idx=n; reset(); });
+    ansBtn.addEventListener("click",function(){ var open=ans.hidden; ans.hidden=!open; ansBtn.setAttribute("aria-expanded",open?"true":"false"); ansBtn.textContent=open?"蓋回去":"看答案"; });
+    reset();
+  })();
+
+  /* ---------- role cards ---------- */
+  (function(){
+    var ROLES=[
+      {tag:"紅票・重傷患",c:"var(--seal)",where:"至善堂的擔架上",item:"止血帶",line:"劇本上你要被抬走。交融波發生時，你正躺著。"},
+      {tag:"黃票・骨折傷患",c:"var(--amber)",where:"教學區走廊",item:"夾板（可以拿來打）",line:"演習中你走路一跛一跛的。交融波之後就好了。"},
+      {tag:"綠票・輕傷民眾",c:"var(--jade)",where:"自由活動",item:"背包多兩格",line:"最自由的開局。你可以第一個衝進福利社。"},
+      {tag:"黑票・罹難者",c:"var(--paper)",where:"鑑識大樓旁的停屍區",item:"白布",line:"你今天的工作是當屍體。蟲一開始不會注意靜止的你。"},
+      {tag:"媒體記者",c:"var(--steel)",where:"正門",item:"相機（拍蟲可加速圖鑑）",line:"可以自由進出管制區。警校生會躲你的鏡頭。"},
+      {tag:"鬧事民眾",c:"var(--plum)",where:"升旗廣場",item:"擴音器",line:"警校生一開始不太信任你。擴音器能放大聲系異能。"}
+    ];
+    var card=document.getElementById("roleCard"), cur=3, busy=false;
+    function render(r){
+      card.style.setProperty("--tag",r.c);
+      card.innerHTML="";
+      card.appendChild(el("div","band-top"));
+      var inn=el("div","in");
+      inn.appendChild(el("span","tag","演習角色卡"));
+      inn.appendChild(el("h4","",r.tag));
+      var dl=el("dl"); [["開局位置",r.where],["開局道具",r.item]].forEach(function(p){ dl.appendChild(el("dt","",p[0])); dl.appendChild(el("dd","",p[1])); });
+      inn.appendChild(dl); inn.appendChild(el("p","",r.line));
+      card.appendChild(inn);
+    }
+    render(ROLES[cur]);
+    document.getElementById("drawRole").addEventListener("click",function(){
+      if(busy) return; var n; do{ n=Math.floor(Math.random()*ROLES.length); }while(n===cur); cur=n;
+      if(reduce){ render(ROLES[cur]); return; }
+      busy=true; card.classList.add("flip");
+      setTimeout(function(){ render(ROLES[cur]); card.classList.remove("flip"); busy=false; },350);
+    });
+  })();
+
+  /* ---------- bases ---------- */
+  (function(){
+    var BASES=[
+      ["射擊館","入口 1＋地板","實彈射擊示範。志工要戴著耳罩站在後面看。","牆最厚、隔音，靠近械彈庫。只有一個出口，而且地板下有空洞。"],
+      ["綜合體育館","入口 2＋天窗","傷患集合點。紅黃綠黑四區的帳篷都搭在這裡。","空間最大，收容最多人。屋頂薄，哨翅會從天窗下來。"],
+      ["守四舍宿舍","三層樓、多窗","警校生的宿舍，志工不准進去。","樓梯是天然的瓶頸，床位多。但窗戶太多，到處都要補。"],
+      ["圖書館","入口 1＋地下書庫","演習時的媒體休息區，有冷氣和插座。","研究速度加倍。容易起火，地下書庫有穿岩蟲。"],
+      ["游泳池","入口 2","水上救生示範。抽到「溺水民眾」的話，要真的下水。","水是天然的護城河，小蟲過不了水。第三夜以後會有水蟲。"]
+    ];
+    var box=document.getElementById("locs"), wrap=document.getElementById("survival"), mode="day";
+    function render(){
+      box.innerHTML="";
+      BASES.forEach(function(b){ var d=el("div","loc"); d.appendChild(el("span","tag",mode==="day"?"演習中":"交融後　"+b[1])); d.appendChild(el("h4","",b[0])); d.appendChild(el("p","",mode==="day"?b[2]:b[3])); box.appendChild(d); });
+      wrap.classList.toggle("mode-doom",mode==="doom");
+    }
+    document.querySelector("#survival .seg").addEventListener("click",function(e){
+      var b=e.target.closest("button"); if(!b) return; mode=b.getAttribute("data-mode");
+      this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); });
+      render();
+    });
+    render();
+  })();
+
+  /* ---------- nights ---------- */
+  (function(){
+    var POOL=[
+      ["哨翅夜","會飛的蟲從屋頂和窗戶進來。牠們找到了你們的燈光。"],
+      ["穿岩夜","蟲從地板下鑽上來。射擊館唯一的弱點在腳下。"],
+      ["畫皮夜","門外有人敲門，用你朋友的聲音叫你的名字。"],
+      ["寄生夜","一位夥伴在半夜變身。他白天被蛹語者碰過。"],
+      ["適應夜","牠們學會了你最常用的防禦。電網被繞開，火燒不動了。"],
+      ["鐵殼夜","大型重甲蟲衝撞正門。裂隙已經擴大到「閘」。"],
+      ["頌者夜","一隻會讓人產生幻覺的蟲。你看見不存在的敵人。"],
+      ["巢獸夜","一座會走路的巢，持續生出小蟲。要出去打掉牠背上的巢心。"]
+    ];
+    var list=document.getElementById("nightList"), ROMAN=["I","II","III","IV","V","VI","VII"], fadeT=0;
+    function render(mid,fresh){
+      list.innerHTML="";
+      var all=[["蝕蝨潮","裂隙只有針孔大小，只有拇指大的蟲過得來。但數量多到像倒流的蜂蜜。"]].concat(mid).concat([["天裂","裂隙完全打開，天上出現第二個月亮。Boss 現身。"]]);
+      all.forEach(function(n,i){
+        var cls="night"+(i===0?" fixed":"")+(i===6?" boss":"")+(fresh&&i>0&&i<6?" new":"");
+        var li=el("li",cls); li.appendChild(el("span","n",ROMAN[i]));
+        var d=el("div"); d.appendChild(el("b","",n[0])); d.appendChild(el("p","",n[1])); li.appendChild(d); list.appendChild(li);
+      });
+      clearTimeout(fadeT);
+      if(fresh) fadeT=setTimeout(function(){ list.querySelectorAll(".night.new").forEach(function(x){ x.classList.remove("new"); }); },900);
+    }
+    render([POOL[0],POOL[1],POOL[2],POOL[4],POOL[5]],false);
+    document.getElementById("shuffleNights").addEventListener("click",function(){ render(shuffle(POOL).slice(0,5),true); });
+  })();
+
+  /* ---------- taps ---------- */
+  (function(){
+    var btn=document.getElementById("tapsBtn"); if(!btn) return;
+    var actx=null, cur=null, timer=0;
+    var N={G4:392,C5:523.25,E5:659.25,G5:783.99};
+    var song=[["G4",.42],["G4",.14],["C5",1.3],["G4",.42],["C5",.14],["E5",1.3],["G4",.42],["C5",.14],["E5",.55],["G4",.42],["C5",.14],["E5",.55],["C5",.42],["E5",.14],["G5",1.4],["E5",.6],["C5",.6],["G4",1.3],["G4",.42],["G4",.14],["C5",2.2]];
+    function setIdle(){ btn.setAttribute("aria-pressed","false"); btn.textContent="▶ 播放熄燈號"; cur=null; }
+    function stop(){ clearTimeout(timer); if(cur&&actx){ var now=actx.currentTime; try{ cur.master.gain.cancelScheduledValues(now); cur.master.gain.setValueAtTime(cur.master.gain.value,now); cur.master.gain.linearRampToValueAtTime(0,now+.25); }catch(e){} var nodes=cur.nodes; setTimeout(function(){ nodes.forEach(function(n){ try{n.stop();}catch(e){} }); },300); } setIdle(); }
+    btn.addEventListener("click",function(){
+      if(cur){ stop(); return; }
+      try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.resume) actx.resume(); }catch(e){ btn.textContent="這個瀏覽器無法播放聲音"; return; }
+      var master=actx.createGain(); master.gain.value=.16;
+      var filt=actx.createBiquadFilter(); filt.type="lowpass"; filt.frequency.value=1500; filt.Q.value=.6;
+      filt.connect(master); master.connect(actx.destination);
+      var t=actx.currentTime+.08, nodes=[];
+      song.forEach(function(s){
+        var f=N[s[0]], d=s[1];
+        var g=actx.createGain(); var a=t+.04, b=t+Math.min(.25,d*.5), c=Math.max(b+.01,t+d-.08), e=t+d;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.9,a); g.gain.linearRampToValueAtTime(.7,b); g.gain.setValueAtTime(.7,c); g.gain.linearRampToValueAtTime(0,e);
+        ["sawtooth","triangle"].forEach(function(type){ var o=actx.createOscillator(); o.type=type; o.frequency.setValueAtTime(f,t); if(d>1){ var l=actx.createOscillator(), lg=actx.createGain(); l.frequency.value=5; lg.gain.value=3; l.connect(lg); lg.connect(o.frequency); l.start(t+.4); l.stop(e); nodes.push(l); } o.connect(g); o.start(t); o.stop(e+.02); nodes.push(o); });
+        g.connect(filt); t=e+.06;
+      });
+      cur={master:master,nodes:nodes};
+      btn.setAttribute("aria-pressed","true"); btn.textContent="■ 停止";
+      timer=setTimeout(setIdle,(t-actx.currentTime)*1000+150);
+    });
+  })();
+})();
+</script>
+</body>
+</html>
