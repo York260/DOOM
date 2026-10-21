@@ -42,7 +42,8 @@ button { font: inherit; color: inherit; }
 .res span { font-family: var(--mono); font-size: 13px; padding: 2px 8px; border-radius: 6px; background: rgba(10, 15, 23, .72); border: 1px solid var(--line); min-width: 58px; display: flex; justify-content: space-between; gap: 8px; }
 .res b { font-family: var(--body); font-weight: 700; color: var(--muted); }
 .res span.low { border-color: var(--seal); color: var(--seal); }
-.pack { font-size: 12px; color: var(--muted); }
+.pack { font-size: 12px; color: var(--muted); text-align: right; max-width: 46vw; }
+.gear { color: var(--paper); }
 .pausebtn { pointer-events: auto !important; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: rgba(10, 15, 23, .7); display: grid; place-items: center; font-size: 13px; cursor: pointer; }
 .toasts { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 136px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; width: min(92vw, 520px); }
 .toast { font-size: 14px; line-height: 1.5; padding: 6px 12px; border-radius: 8px; background: rgba(10, 15, 23, .82); border: 1px solid var(--line); text-align: center; animation: tin .25s ease-out; }

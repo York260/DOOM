@@ -27,14 +27,16 @@ export class Player {
   moveT = 0; stillT = 0;
   downed = false; downT = 0;
   hurtT = 0;
-  meleeCd = 0; meleeMult = 1; meleeBuffT = 0; meleeBase = 10;
+  meleeCd = 0; meleeMult = 1; meleeBuffT = 0; meleeBonus = 1;
   veilT = 0; stealthT = 0;
   pack: Pack = { food: 0, power: 0, mat: 0 };
   carryCap = 12;
   medkits = 0;
   tourniquet = false;
-  weapon: "mop" | "pistol" = "mop";
+  melee = "mop";
+  ranged: string | null = null;
   ammo = 0;
+  charm: { id: string; known: boolean } | null = null;
   readonly r = 0.45;
   mesh: THREE.Group;
   ring: THREE.Mesh;

@@ -76,6 +76,14 @@ await shot("07-morning");
 if (await page.$(".card")) { await page.click(".card"); await page.click("#go"); }
 s = await step(2);
 console.log("day2", JSON.stringify(s));
+// reload and continue from the morning save
+await page.reload();
+await page.waitForTimeout(800);
+const cont = await page.$("#cont");
+console.log("continue button:", !!cont);
+if (cont) { await cont.click(); await page.waitForTimeout(500); }
+s = await step(1);
+console.log("restored", JSON.stringify(s));
 // jump to the boss night
 await page.evaluate(() => window.__AT.debugSkipTo("boss"));
 s = await step(12, "g.player.hp = Math.max(g.player.hp, 60)");

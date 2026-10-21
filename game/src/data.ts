@@ -213,3 +213,25 @@ export const FACTS: Record<string, string> = {
   firstnight: "第一夜，第一波蟲是從西邊的排水溝來的。",
   armory: "區隊長只相信說中過一件事的人。他身上有械彈庫的鑰匙。",
 };
+
+export interface WeaponDef { id: string; name: string; ranged: boolean; dmg: number; cd: number; reach: number; ammo: number; cleave: number; slow: number; color: number }
+export const WEAPONS: Record<string, WeaponDef> = {
+  mop: { id: "mop", name: "拖把", ranged: false, dmg: 10, cd: 0.42, reach: 2.1, ammo: 0, cleave: 0.6, slow: 0, color: 0xdce1e6 },
+  bat: { id: "bat", name: "伸縮警棍", ranged: false, dmg: 12, cd: 0.32, reach: 2.0, ammo: 0, cleave: 0.5, slow: 0, color: 0xcfd6dd },
+  axe: { id: "axe", name: "消防斧", ranged: false, dmg: 19, cd: 0.55, reach: 2.5, ammo: 0, cleave: 0.9, slow: 0, color: 0xff8a4c },
+  nail: { id: "nail", name: "釘槍", ranged: true, dmg: 9, cd: 0.22, reach: 8, ammo: 140, cleave: 0, slow: 0, color: 0xfff1c0 },
+  ext: { id: "ext", name: "滅火器", ranged: true, dmg: 5, cd: 0.18, reach: 5.5, ammo: 90, cleave: 0, slow: 0.6, color: 0xe8f4ff },
+  pistol: { id: "pistol", name: "制式手槍", ranged: true, dmg: 16, cd: 0.32, reach: 10, ammo: 70, cleave: 0, slow: 0, color: 0xfff1c0 },
+};
+
+export interface CharmDef { id: string; look: string; name: string; reveal: string }
+export const CHARMS: CharmDef[] = [
+  { id: "battery", look: "一顆永遠充不滿的行動電源", name: "永電的行動電源", reveal: "每天早上，據點的電都多了一格。" },
+  { id: "coin", look: "一枚很冰的舊錢幣", name: "共鳴的舊錢幣", reveal: "錢幣在發燙。你的異能鍵比平常更早亮起來。" },
+  { id: "cloth", look: "一塊洗不乾淨的白布", name: "沉睡的白布", reveal: "夜裡，蟲比較不會注意到你。" },
+  { id: "umbrella", look: "一把收不起來的雨傘", name: "認主的雨傘", reveal: "雨傘自己擋下了一下。你受到的傷害變少了。" },
+  { id: "bell", look: "一個不會響的鈴鐺", name: "通靈的鈴鐺", reveal: "鈴鐺響了。拾骸者就在附近。" },
+  { id: "badge", look: "一枚別人的校徽", name: "記憶的校徽", reveal: "校徽很燙。你的每一擊都重了一點。下一輪，你還會再見到它。" },
+];
+
+FACTS.taps = "行政大樓廣播室的熄燈號排程，三天前被人刪掉了。";

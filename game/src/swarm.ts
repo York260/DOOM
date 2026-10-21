@@ -14,7 +14,7 @@ export const MITE = 0, WING = 1, CARRIER = 2, LEAPER = 3, TANK = 4;
 
 export type DmgSource = "melee" | "ability" | "ranged" | "trap" | "turret";
 
-export interface Target { x: number; z: number; r: number; alive: boolean; kind: "player" | "npc" | "core"; ref: unknown; stealth?: boolean }
+export interface Target { x: number; z: number; r: number; alive: boolean; kind: "player" | "npc" | "core"; ref: unknown; stealth?: boolean; shy?: boolean }
 
 export interface SwarmEnv {
   world: World;
@@ -65,7 +65,7 @@ export class Swarm {
   constructor(scene: THREE.Scene) {
     this.hgw = Math.ceil((MAP.maxX - MAP.minX) / this.hc) + 1;
     this.hgh = Math.ceil((MAP.maxZ - MAP.minZ) / this.hc) + 1;
-    this.head = new Int32Array(this.hgw * this.hgh);
+    this.head = new Int32Array(this.hgw * this.hgh).fill(-1);
     const geos: THREE.BufferGeometry[] = [
       new THREE.SphereGeometry(1, 7, 5).scale(0.9, 0.5, 1.25),
       new THREE.OctahedronGeometry(1).scale(1.4, 0.25, 0.8),
@@ -113,7 +113,7 @@ export class Swarm {
     this.onDeath(i, this.type[i] as BugType, this.x[i], this.z[i]);
   }
 
-  clear() { for (let i = 0; i < this.n; i++) this.alive[i] = 0; this.n = 0; }
+  clear() { for (let i = 0; i < this.n; i++) this.alive[i] = 0; this.n = 0; this.head.fill(-1); }
 
   private rebuildHash() {
     this.head.fill(-1);
@@ -166,6 +166,7 @@ export class Swarm {
       if (canSee) for (const tg of env.targets) {
         if (!tg.alive || tg.stealth) continue;
         const d = Math.hypot(tg.x - x, tg.z - z);
+        if (tg.shy && d > 4) continue;
         if (d < td) { td = d; target = tg; }
       }
       const aggro = env.night ? 9 : (t === WING ? 22 : 15);

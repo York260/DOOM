@@ -31,6 +31,7 @@ export class UI {
   private hpEl: HTMLElement; private objEl: HTMLElement; private suspEl: HTMLElement; private suspBar: HTMLElement;
   private resEls: Record<string, HTMLElement> = {};
   private packEl: HTMLElement;
+  private gearEl: HTMLElement;
   private toastsEl: HTMLElement;
   private bossEl: HTMLElement; private bossBar: HTMLElement; private bossName: HTMLElement;
   private freezeEl: HTMLElement; private chapterEl: HTMLElement; private flashEl: HTMLElement; private vigEl: HTMLElement;
@@ -67,7 +68,8 @@ export class UI {
     pause.addEventListener("click", () => this.onPause());
     top.append(res, pause);
     this.packEl = h("div", "pack");
-    tr.append(top, this.packEl);
+    this.gearEl = h("div", "pack gear");
+    tr.append(top, this.packEl, this.gearEl);
     this.hud.appendChild(tr);
 
     this.toastsEl = h("div", "toasts"); this.hud.appendChild(this.toastsEl);
@@ -121,6 +123,7 @@ export class UI {
     }
     this.set("pack", `${carried}/${cap}`, () => (this.packEl.textContent = `背包 ${carried}/${cap}`));
   }
+  setGear(text: string) { this.set("gear", text, () => (this.gearEl.textContent = text)); }
   setAbility(glow: number, pips: boolean[], heat: number, face: string, color: string, locked: boolean) {
     this.abBtn.style.setProperty("--g", glow.toFixed(2));
     this.abBtn.classList.toggle("hot", glow >= 0.99);
@@ -186,7 +189,7 @@ export class UI {
   closeModal() { this.modalEl.hidden = true; this.modalEl.innerHTML = ""; }
   private open(inner: HTMLElement) { this.modalEl.innerHTML = ""; this.modalEl.appendChild(inner); this.modalEl.hidden = false; this.modalEl.scrollTop = 0; }
 
-  showTitle(meta: Meta, onStart: (nights: 3 | 7) => void, onMute: (m: boolean) => void, onReset: () => void) {
+  showTitle(meta: Meta, onStart: (nights: 3 | 7) => void, onMute: (m: boolean) => void, onReset: () => void, cont: { label: string; go: () => void } | null = null) {
     const p = h("div", "panel");
     let nights = meta.nights;
     const facts = Object.keys(meta.facts).length;
@@ -198,7 +201,8 @@ export class UI {
           <p class="tagline"><span>你只是來警察大學</span><span>當演習志工的普通大學生。</span><span>中午十二點，天會裂開。</span></p>
           <p class="muted">${meta.loop > 1 ? `第 ${meta.loop} 輪。你記得 ${facts} 件事。` : "第一輪。你什麼都不知道。"}</p>
           <div class="row"><span class="muted" style="font-size:13px">模式</span><div class="seg" id="mode"><button type="button" data-n="3">三夜（約 25 分鐘）</button><button type="button" data-n="7">七夜</button></div></div>
-          <div class="row"><button class="btn primary" id="go" type="button">報到</button><button class="btn small" id="mute" type="button"></button></div>
+          ${cont ? `<button class="btn primary" id="cont" type="button" style="align-self:flex-start">${esc(cont.label)}</button>` : ""}
+          <div class="row"><button class="btn ${cont ? "" : "primary"}" id="go" type="button">${cont ? "重新報到" : "報到"}</button><button class="btn small" id="mute" type="button"></button></div>
           <p class="help"><b>手機</b>：左半邊拖曳移動，右下角兩顆按鈕：互動、異能。<br><b>電腦</b>：WASD／方向鍵移動，E 互動，空白鍵異能。<br>武器會自動攻擊。異能鍵越亮，代表你越接近一個隱藏條件。</p>
           ${meta.loop > 1 || meta.runs > 0 ? `<button class="btn small" id="reset" type="button" style="align-self:flex-start">清除所有記憶</button>` : ""}
         </div>
@@ -212,6 +216,7 @@ export class UI {
     paintMute();
     mute.addEventListener("click", () => { meta.muted = !meta.muted; paintMute(); onMute(meta.muted); });
     p.querySelector("#go")!.addEventListener("click", () => onStart(nights));
+    p.querySelector("#cont")?.addEventListener("click", () => { this.closeModal(); cont!.go(); });
     p.querySelector("#reset")?.addEventListener("click", (e) => {
       const b = e.currentTarget as HTMLButtonElement;
       if (b.dataset.armed) { onReset(); } else { b.dataset.armed = "1"; b.textContent = "再按一次確認清除"; }

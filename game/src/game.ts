@@ -10,11 +10,11 @@ import { Input } from "./input";
 import { UI, type ArrowMark } from "./ui";
 import { Audio } from "./audio";
 import { Base } from "./base";
-import { loadMeta, saveMeta, resetMeta, type Meta } from "./meta";
+import { loadMeta, saveMeta, resetMeta, saveRun, loadRun, clearRun, type Meta } from "./meta";
 import { buildReport, type RunStats } from "./report";
 import {
   ABILITIES, ROLES, MAJORS, BUILD_CARDS, NIGHT_POOL, NIGHT_FIRST, NIGHT_LAST, NAMED_NPCS, GENERIC_NAMES,
-  OMENS, FACTS, type Effect, type RoleDef, type MajorDef, type NightDef, type BuildCard,
+  OMENS, FACTS, WEAPONS, CHARMS, type Effect, type RoleDef, type MajorDef, type NightDef, type BuildCard,
 } from "./data";
 import { mulberry32, stream, pick, shuffle, irange, type Rng } from "./rng";
 import { clamp, dist, fmtClock, fmtDur, cn, textSprite } from "./util";
@@ -27,6 +27,20 @@ interface Crate { x: number; z: number; kind: "food" | "mat" | "power" | "med" |
 interface Zone { x: number; z: number; r: number; dps: number; slow: number; heal: number; t: number; follow: boolean; color: number }
 interface Thorn { ax: number; az: number; bx: number; bz: number; dps: number; t: number }
 interface Boss { x: number; z: number; hp: number; max: number; r: number; mesh: THREE.Group; spawnCd: number; slamCd: number; windup: number; alive: boolean; eyes: THREE.Mesh[] }
+
+interface RunSave {
+  v: 1; loop: number; seed: number; nightsTotal: 3 | 7; day: number; roleId: string; majorId: string; abilityId: string;
+  ab: { found: boolean[]; foundAt: (string | null)[]; awake: boolean; awakeAt: string | null; starDay: number[]; uses: number; nearMiss: (string | null)[]; secretMiss: string | null; pressed: boolean; lastForm: number };
+  stash: { food: number; power: number; mat: number };
+  base: { id: string; doors: { hp: number; max: number }[]; core: { x: number; z: number; hp: number; max: number }; cards: string[] };
+  player: { x: number; z: number; hp: number; pack: { food: number; power: number; mat: number }; medkits: number; tourniquet: boolean; melee: string; ranged: string | null; ammo: number; charm: { id: string; known: boolean } | null; carryCap: number; speed: number; meleeBonus: number };
+  npcs: { name: string; who: string; defId: string | null; color: number; state: string; hp: number; x: number; z: number; rescueT: number }[];
+  crates: { x: number; z: number; kind: string; opened: boolean }[];
+  nightPlan: string[];
+  stats: { events: { t: string; text: string; w: number }[]; rescued: number; lost: number; seen: number; nightsSurvived: number; takenVoices: string[]; stillKills: number; returned: number };
+  kills: Record<DmgSource, number>; runFacts: string[];
+  flags: { codeKnown: boolean; hasKey: boolean; tapsOn: boolean; prophecy: boolean; carrierDone: boolean };
+}
 
 const EVE_START = 450, QUAKE = 720, DUSK = 1050, NIGHT = 1080;
 
@@ -204,9 +218,12 @@ export class Game {
     this.phase = "title";
     this.ui.showHud(false);
     this.input.enabled = false;
-    this.ui.showTitle(this.meta, (n) => { this.audio.unlock(); this.meta.nights = n; saveMeta(this.meta); this.beginCheckin(n); },
+    const save = loadRun<RunSave>();
+    const cont = save && save.v === 1 && save.loop === this.meta.loop ? save : null;
+    this.ui.showTitle(this.meta, (n) => { this.audio.unlock(); this.meta.nights = n; saveMeta(this.meta); clearRun(); this.beginCheckin(n); },
       (m) => { this.audio.setMuted(m); saveMeta(this.meta); },
-      () => { resetMeta(); this.meta = loadMeta(); this.showTitle(); });
+      () => { resetMeta(); clearRun(); this.meta = loadMeta(); this.showTitle(); },
+      cont ? { label: `繼續：第${cn(cont.day)}天早上（${cont.nightsTotal}夜模式）`, go: () => { this.audio.unlock(); this.restore(cont); } } : null);
   }
 
   private beginCheckin(n: 3 | 7) {
@@ -236,10 +253,10 @@ export class Game {
     this.stats = this.freshStats();
     this.runFacts = new Set();
     this.suspicion = 0; this.prophecy = false; this.hasKey = false; this.codeKnown = !!this.meta.facts.safe;
-    this.carrierDone = false; this.blackoutT = 0; this.omenIdx = 0; this.drillStep = 0; this.drillCrates = 0;
+    this.carrierDone = false; this.blackoutT = 0; this.tapsOn = false; this.tapsPlayed = -1; this.bossStun = 0; this.omenIdx = 0; this.drillStep = 0; this.drillCrates = 0;
     this.adapt = null; this.lure = null; this.endT = -1; this.spawnQueue = []; this.waves = []; this.timers = [];
     const p = this.player;
-    p.hp = p.maxHp = 100; p.downed = false; p.pack = { food: 0, power: 0, mat: 0 }; p.medkits = 0; p.weapon = "mop"; p.ammo = 0;
+    p.hp = p.maxHp = 100; p.downed = false; p.pack = { food: 0, power: 0, mat: 0 }; p.medkits = 0; p.melee = this.role.id === "yellow" ? "bat" : "mop"; p.ranged = null; p.ammo = 0; p.charm = null;
     p.meleeMult = 1; p.meleeBuffT = 0; p.veilT = 0; p.stealthT = 0; p.moveT = 0; p.stillT = 0;
     this.rift.visible = false; this.riftGlow.visible = false; this.riftLight.intensity = 0;
     this.world.lightFires(false); this.world.setRain(false); this.fx.rainOn = false;
@@ -256,7 +273,9 @@ export class Game {
     p.x = r.start.x; p.z = r.start.z; p.facing = Math.PI;
     p.carryCap = 12 + (r.id === "green" ? 4 : 0) + (this.major.id === "pe" ? 2 : 0);
     p.speed = 6.2 * (this.major.id === "pe" ? 1.12 : 1);
-    p.meleeBase = 10 * (r.id === "yellow" ? 1.4 : 1);
+    p.meleeBonus = r.id === "yellow" ? 1.4 : 1;
+    p.melee = r.id === "yellow" ? "bat" : "mop";
+    if (this.meta.relic === "badge") { p.charm = { id: "badge", known: true }; this.later(4, () => this.ui.toast("你的口袋裡，有一枚別人的校徽。上一輪的。", "jade", 4500)); }
     p.tourniquet = r.id === "red";
     p.medkits = this.major.id === "nurse" ? 1 : 0;
     // NPCs at their drill posts
@@ -374,6 +393,8 @@ export class Game {
     this.updateZones(dt);
     this.updateAbility(dt);
     this.updateInteract();
+    this.updateBell(dt);
+    if (this.bellMark) { this.bellMark.t -= dt; if (this.bellMark.t <= 0) this.bellMark = null; }
     this.fx.update(dt, this.player);
     this.world.tick(performance.now() / 1000);
     this.checkEnd(dt);
@@ -399,6 +420,7 @@ export class Game {
       if (this.clock >= NIGHT) this.startNight();
     } else if (this.phase === "night") {
       this.nightT += dt;
+      this.checkTaps();
       this.clock = NIGHT + clamp(this.nightT / 150, 0, 0.995) * 720;
       this.lure && (this.lure.t -= dt);
       for (const w of this.waves) if (!w.done && this.nightT >= w.at) { w.done = true; w.spawn(); }
@@ -442,7 +464,7 @@ export class Game {
   }
 
   private startQuake() {
-    this.phase = "quake"; this.quakeT = 0;
+    this.phase = "quake"; this.quakeT = 0; this.shake = 1.4;
     this.audio.alarm(); this.audio.quake();
     this.ui.flash();
     this.ui.chapter("12:00", "交融波", 4200);
@@ -516,6 +538,20 @@ export class Game {
       }
     }
   }
+
+  private bellT = 0;
+  private updateBell(dt: number) {
+    const p = this.player;
+    if (p.charm?.id !== "bell") return;
+    this.bellT -= dt;
+    if (this.bellT > 0) return;
+    this.bellT = 1;
+    for (let i = 0; i < this.swarm.n; i++) {
+      if (!this.swarm.alive[i] || this.swarm.type[i] !== CARRIER) continue;
+      if (dist(p.x, p.z, this.swarm.x[i], this.swarm.z[i]) < 40) { this.revealCharm(); this.bellMark = { x: this.swarm.x[i], z: this.swarm.z[i], t: 1.2 }; this.audio.ui(); break; }
+    }
+  }
+  private bellMark: { x: number; z: number; t: number } | null = null;
 
   private carrierEvent() {
     this.carrierDone = true;
@@ -625,6 +661,7 @@ export class Game {
     if (named.length) { const n = pick(this.rng, named); lines.push({ text: pick(this.rng, n.def!.lines.log) }); }
     let gain = { food: 0, power: 0 };
     if (this.major.id === "ee") gain.power += 1;
+    if (this.player.charm?.id === "battery") { gain.power += 1; this.revealCharm(); }
     if (this.major.id === "bio") gain.food += 2;
     if (b.cards.has("garden")) gain.food += 2;
     if (b.cards.has("dynamo")) gain.power += 1;
@@ -653,6 +690,7 @@ export class Game {
       this.stash.mat -= spent;
       for (const c of cards) { b.addCard(c.id); this.ui.toast(`蓋好了：${c.name}`, "jade", 2500); }
       this.fedT = 0;
+      saveRun(this.snapshot());
       this.startDay(false);
     });
   }
@@ -724,6 +762,8 @@ export class Game {
   private hurtPlayer(dmg: number) {
     const p = this.player;
     if (p.downed || this.phase === "eve") return;
+    if (p.charm?.id === "umbrella") { dmg *= 0.7; this.revealCharm(); }
+    this.shake = Math.max(this.shake, 0.25);
     p.hp -= dmg; p.hurtT = 0.25; this.hurtFlashT = 0.35;
     this.audio.hurt();
     if (p.hp <= 0) {
@@ -822,7 +862,9 @@ export class Game {
     const p = this.player;
     const targets: Target[] = [];
     const stealth = p.stealthT > 0 || p.veilT > 0 || (this.role.id === "black" && p.stillT > 1.5);
-    if (!p.downed && this.phase !== "eve") targets.push({ x: p.x, z: p.z, r: p.r, alive: true, kind: "player", ref: p, stealth });
+    const shy = p.charm?.id === "cloth" && this.night;
+    if (shy && this.nightT > 5) this.revealCharm();
+    if (!p.downed && this.phase !== "eve") targets.push({ x: p.x, z: p.z, r: p.r, alive: true, kind: "player", ref: p, stealth, shy });
     for (const n of this.npcs) if (n.state === "following" || n.state === "base" || n.state === "waiting") targets.push({ x: n.x, z: n.z, r: n.r, alive: true, kind: "npc", ref: n });
     if (this.base && this.night) targets.push({ x: this.base.core.x, z: this.base.core.z, r: 2, alive: true, kind: "core", ref: this.base });
     const captives = this.npcs.filter((n) => n.state === "waiting").map((n) => ({ x: n.x, z: n.z, id: n.id }));
@@ -898,25 +940,51 @@ export class Game {
     if (p.downed || this.phase === "eve" || this.phase === "quake") return;
     this.meleeT -= dt;
     if (this.meleeT > 0) return;
-    const ranged = p.weapon === "pistol" && p.ammo > 0;
-    const reach = ranged ? 10 : 2.1;
-    const i = this.swarm.nearest(p.x, p.z, reach);
-    const bossNear = this.boss && this.boss.alive && dist(p.x, p.z, this.boss.x, this.boss.z) < reach + this.boss.r;
+    const mw = WEAPONS[p.melee] ?? WEAPONS.mop;
+    const rw = p.ranged && p.ammo > 0 ? WEAPONS[p.ranged] : null;
+    // melee first if something is right next to you, otherwise shoot
+    let w = mw;
+    let i = this.swarm.nearest(p.x, p.z, mw.reach);
+    let bossNear = !!(this.boss && this.boss.alive && dist(p.x, p.z, this.boss.x, this.boss.z) < mw.reach + this.boss.r);
+    if (i < 0 && !bossNear && rw) {
+      w = rw;
+      i = this.swarm.nearest(p.x, p.z, rw.reach);
+      bossNear = !!(this.boss && this.boss.alive && dist(p.x, p.z, this.boss.x, this.boss.z) < rw.reach + this.boss.r);
+    }
     if (i < 0 && !bossNear) return;
     const tx = i >= 0 ? this.swarm.x[i] : this.boss!.x, tz = i >= 0 ? this.swarm.z[i] : this.boss!.z;
     if (Math.hypot(this.input.moveX, this.input.moveZ) < 0.1) p.facing = Math.atan2(tx - p.x, tz - p.z);
-    let dmg = (ranged ? 16 : p.meleeBase * p.meleeMult) * this.dmgBonus(tx, tz);
-    const src: DmgSource = ranged ? "ranged" : "melee";
-    if (ranged) { p.ammo--; this.fx.bolt([{ x: p.x, z: p.z }, { x: tx, z: tz }], 0xfff1c0); this.meleeT = 0.32; if (p.ammo === 0) this.ui.toast("子彈用完了。換回拖把。", "", 2500); }
-    else { this.fx.ring(p.x + Math.sin(p.facing) * 0.9, p.z + Math.cos(p.facing) * 0.9, 1.4, p.meleeMult > 1 ? 0xff8a4c : 0xdce1e6, 0.18); this.meleeT = 0.42; }
+    const charm = p.charm?.id === "badge" ? 1.1 : 1;
+    const dmg = w.dmg * (w.ranged ? 1 : p.meleeBonus * p.meleeMult) * charm * this.dmgBonus(tx, tz);
+    const src: DmgSource = w.ranged ? "ranged" : "melee";
+    this.meleeT = w.cd;
+    if (w.ranged) {
+      p.ammo--;
+      if (w.slow) { this.fx.burst(tx, tz, w.color, 6, 2, 1); this.swarm.query(tx, tz, 2.2, (j) => { this.swarm.slow[j] = Math.max(this.swarm.slow[j], w.slow); if (j !== i) this.hitBug(j, dmg * 0.5, src); }); }
+      else this.fx.bolt([{ x: p.x, z: p.z }, { x: tx, z: tz }], w.color);
+      if (p.ammo === 0) { this.ui.toast(`${w.name}用完了。`, "", 2500); p.ranged = null; }
+    } else {
+      this.fx.ring(p.x + Math.sin(p.facing) * 0.9, p.z + Math.cos(p.facing) * 0.9, 1.4, p.meleeMult > 1 ? 0xff8a4c : w.color, 0.18);
+    }
     this.audio.hit();
+    if (p.charm?.id === "badge" && !p.charm.known) this.revealCharm();
     if (i >= 0) {
-      if (!ranged) { // a small cleave: hit everything right in front of you
+      if (!w.ranged && w.cleave) { // hit everything right in front of you
         const cx = p.x + Math.sin(p.facing) * 1.1, cz = p.z + Math.cos(p.facing) * 1.1;
-        this.swarm.query(cx, cz, 1.3, (j) => { if (j !== i) this.hitBug(j, dmg * 0.6, src); });
+        this.swarm.query(cx, cz, 1.3, (j) => { if (j !== i) this.hitBug(j, dmg * w.cleave, src); });
       }
+      if (w.slow) this.swarm.slow[i] = Math.max(this.swarm.slow[i], w.slow);
       this.hitBug(i, dmg, src);
     } else this.damageBoss(dmg, src);
+  }
+
+  private revealCharm() {
+    const c = this.player.charm;
+    if (!c || c.known) return;
+    c.known = true;
+    const d = CHARMS.find((x) => x.id === c.id)!;
+    this.ui.toast(`${d.reveal}（${d.name}）`, "jade", 5000);
+    this.ev(`發現了異化物的祕密：${d.name}。`, 2);
   }
 
   private hitBug(i: number, dmg: number, src: DmgSource) {
@@ -956,6 +1024,7 @@ export class Game {
   private updateBoss(dt: number) {
     const b = this.boss!;
     if (!b.alive) return;
+    if (this.bossStun > 0) { this.bossStun -= dt; return; }
     const base = this.base!;
     const half = b.hp < b.max * 0.5;
     const sp = half ? 1.9 : 1.3;
@@ -980,7 +1049,7 @@ export class Game {
     if (b.windup > 0) {
       b.windup -= dt;
       if (b.windup <= 0) {
-        this.fx.ring(b.x, b.z, 7, 0xff6a4a, 0.5); this.audio.ability("nova");
+        this.fx.ring(b.x, b.z, 7, 0xff6a4a, 0.5); this.audio.ability("nova"); this.shake = Math.max(this.shake, 0.7);
         if (!p.downed && dist(p.x, p.z, b.x, b.z) < 7) { this.hurtPlayer(28); const l = Math.max(0.1, dist(p.x, p.z, b.x, b.z)); p.x += ((p.x - b.x) / l) * 3; p.z += ((p.z - b.z) / l) * 3; }
         for (const n of this.npcs) if ((n.state === "base" || n.state === "following") && dist(n.x, n.z, b.x, b.z) < 7) this.hurtNpc(n, 20);
       }
@@ -1061,7 +1130,8 @@ export class Game {
     const s = this.condState();
     const active = this.phase !== "eve" && this.phase !== "quake";
     if (active) ab.tick(dt, s, this.stamp());
-    const glow = active && !this.player.downed ? ab.glow(s) : 0;
+    let glow = active && !this.player.downed ? ab.glow(s) : 0;
+    if (this.player.charm?.id === "coin" && glow > 0) { glow = Math.min(1, glow * 1.5); if (glow > 0.6) this.revealCharm(); }
     const face = !active ? "－" : ab.foundCount > 0 ? ab.def.src : "？";
     const color = ab.pressed ? ab.def.css : "#e9a640";
     this.ui.setAbility(glow, [...ab.found, ab.awake], ab.heat, face, color, ab.lock > 0 || !active);
@@ -1089,7 +1159,7 @@ export class Game {
       this.ev(`頓悟：${res.title}。${res.line}`, 3);
       if (ab.foundCount === 3) this.later(2.6, () => this.ui.toast(`生存日誌多了一句話：「${ab.def.secret.riddle}」`, "hand", 6000));
     } else if (res.kind === "awaken") {
-      this.slowT = 1.8;
+      this.slowT = 1.8; this.shake = 1;
       this.audio.awaken(); this.ui.flash();
       this.ui.freeze(res.line!, `覺醒　${res.title}`, 3600);
       this.ev(`覺醒：${res.title}。`, 3);
@@ -1241,11 +1311,39 @@ export class Game {
         if (n.state === "waiting") consider(d - 0.3, "救援", () => this.rescue(n));
         else if (n.state === "drill") consider(d - 0.2, n.def?.id === "yan" && this.canProphesy() ? "預言" : "說話", () => this.talk(n));
       }
+      if (!this.tapsOn && this.phase !== "night") consider(this.world.distBroadcast(p.x, p.z) + 0.6, this.knowsTaps() ? "恢復熄燈號" : "廣播系統", () => this.broadcast());
       if (!label && p.medkits > 0 && p.hp < p.maxHp * 0.7) { label = "急救"; this.interactTarget = () => { p.medkits--; p.hp = Math.min(p.maxHp, p.hp + (this.major.id === "nurse" ? 80 : 45)); this.ui.toast("用掉了一個急救包。", "jade", 1800); }; }
     }
     this.ui.setInteract(label);
     if (this.input.takeInteract() && this.interactTarget) { this.interactTarget(); this.audio.ui(); }
   }
+
+  private tapsOn = false;
+  private tapsPlayed = -1;
+  private knowsTaps() { return !!this.meta.facts.taps || this.runFacts.has("taps"); }
+  private broadcast() {
+    if (!this.knowsTaps()) {
+      this.learn("taps");
+      this.ui.toast("廣播系統的排程表上，22:30 的熄燈號被人刪掉了。刪除日期是三天前。", "hand", 5500);
+      this.ev("發現熄燈號的排程被刪掉了。", 2);
+      return;
+    }
+    this.tapsOn = true;
+    this.ui.toast("你重新設定了 22:30 的熄燈號。", "warm", 4000);
+    this.ev("恢復了熄燈號的排程。", 2);
+  }
+  private checkTaps() {
+    if (this.phase !== "night" || this.clock < 1350 || this.tapsPlayed === this.day) return;
+    this.tapsPlayed = this.day;
+    if (!this.tapsOn) { this.ui.toast("22:30。廣播喇叭沙沙地響了一聲，然後就安靜了。", "hand", 4000); return; }
+    this.audio.taps();
+    for (let i = 0; i < this.swarm.n; i++) if (this.swarm.alive[i]) { this.swarm.stun[i] = Math.max(this.swarm.stun[i], 5); }
+    if (this.boss && this.boss.alive) { this.boss.windup = 0; this.boss.slamCd = 6; this.bossStun = 5; }
+    this.ui.freeze("熄燈號響了。所有的蟲，同時停了下來。", "22:30　熄燈號", 4200);
+    this.ev("22:30，熄燈號響起，蟲群停了下來。", 3);
+  }
+  private bossStun = 0;
+  private shake = 0;
 
   private canProphesy() { return !!this.meta.facts.blackout && !this.prophecy && this.clock < 615 && this.phase === "eve"; }
 
@@ -1308,7 +1406,25 @@ export class Game {
       case "mix": { const q = r(); if (q < 0.25) { p.medkits++; got = "急救包 "; } else if (q < 0.5) add("food", 2); else if (q < 0.8) add("mat", 3); else add("power", 1); break; }
       case "safe": add("food", 8); this.learn("safe"); this.ev("打開了福利社的密碼鎖箱子。", 1); break;
       case "note": this.codeKnown = true; this.learn("safe"); this.ui.toast("一張紙條：「福利社的鎖：0742」", "hand", 4500); got = "紙條"; break;
-      case "armory": p.weapon = "pistol"; p.ammo = 70; got = "制式手槍（70 發）"; this.ev("用區隊長的鑰匙打開了械彈庫。", 2); this.ui.toast("武器變成了手槍：會自動射擊更遠的蟲。", "warm", 3500); break;
+      case "armory": p.ranged = "pistol"; p.ammo = WEAPONS.pistol.ammo; got = `制式手槍（${p.ammo} 發）`; this.ev("用區隊長的鑰匙打開了械彈庫。", 2); this.ui.toast("拿到了手槍：沒有蟲貼近時，會自動射擊遠處的蟲。", "warm", 3500); break;
+    }
+    if (this.phase !== "eve" && ["mix", "mat", "power", "med", "food"].includes(c.kind)) {
+      const q = r();
+      const wpool: Record<string, string[]> = { mat: ["axe", "bat"], power: ["nail"], med: ["ext"], mix: ["axe", "nail", "ext", "bat"], food: ["bat"] };
+      if (q < 0.16) {
+        const wid = pick(r, wpool[c.kind]);
+        const w = WEAPONS[wid];
+        if (w.ranged) { p.ranged = wid; p.ammo = w.ammo; } else p.melee = wid;
+        got += `${w.name} `;
+        this.ui.toast(w.ranged ? `換上了${w.name}（${w.ammo} 發）。沒有蟲貼近時會自動射擊。` : `換上了${w.name}。`, "warm", 3000);
+      } else if (q < 0.27 && (c.kind === "mix" || c.kind === "food")) {
+        const owned = p.charm?.id;
+        const d = pick(r, CHARMS.filter((x) => x.id !== owned));
+        p.charm = { id: d.id, known: false };
+        got += `${d.look} `;
+        this.ui.toast(`撿到：${d.look}。它有點奇怪。`, "hand", 4000);
+        this.ev(`撿到了${d.look}。`, 1);
+      }
     }
     c.opened = true;
     const lid = c.mesh.getObjectByName("lid"); if (lid) { lid.position.set(0.3, 0.6, 0.5); lid.rotation.x = -1.1; }
@@ -1333,6 +1449,7 @@ export class Game {
 
   private finish(win: boolean) {
     this.phase = "report";
+    clearRun();
     this.input.enabled = false;
     if (win) this.stats.nightsSurvived = this.nightsTotal;
     const quotes: { text: string; who: string }[] = [];
@@ -1364,6 +1481,71 @@ export class Game {
   }
   private saveMetaSoon() { saveMeta(this.meta); }
 
+  private snapshot(): RunSave {
+    const p = this.player, ab = this.ability, b = this.base!;
+    return {
+      v: 1, loop: this.meta.loop, seed: this.seed, nightsTotal: this.nightsTotal, day: this.day,
+      roleId: this.role.id, majorId: this.major.id, abilityId: ab.def.id,
+      ab: { found: [...ab.found], foundAt: [...ab.foundAt], awake: ab.awake, awakeAt: ab.awakeAt, starDay: [...ab.starDay], uses: ab.uses, nearMiss: [...ab.nearMiss], secretMiss: ab.secretMiss, pressed: ab.pressed, lastForm: ab.lastForm },
+      stash: { ...this.stash },
+      base: { id: b.def.id, doors: b.doors.map((d) => ({ hp: d.hp, max: d.max })), core: { ...b.core }, cards: [...b.cards] },
+      player: { x: p.x, z: p.z, hp: p.hp, pack: { ...p.pack }, medkits: p.medkits, tourniquet: p.tourniquet, melee: p.melee, ranged: p.ranged, ammo: p.ammo, charm: p.charm ? { ...p.charm } : null, carryCap: p.carryCap, speed: p.speed, meleeBonus: p.meleeBonus },
+      npcs: this.npcs.filter((n) => n.state !== "dead").map((n) => ({ name: n.name, who: n.who, defId: n.def?.id ?? null, color: (n.mesh.children[0] as THREE.Mesh & { material: THREE.MeshLambertMaterial }).material.color.getHex(), state: n.state, hp: n.hp, x: n.x, z: n.z, rescueT: n.rescueT })),
+      crates: this.crates.map((c) => ({ x: c.x, z: c.z, kind: c.kind, opened: c.opened })),
+      nightPlan: this.nightPlan.map((n) => n.id),
+      stats: { events: this.stats.events, rescued: this.stats.rescued, lost: this.stats.lost, seen: this.stats.seen, nightsSurvived: this.stats.nightsSurvived, takenVoices: this.stats.takenVoices, stillKills: this.stats.stillKills, returned: this.stats.returned },
+      kills: { ...this.swarm.kills }, runFacts: [...this.runFacts],
+      flags: { codeKnown: this.codeKnown, hasKey: this.hasKey, tapsOn: this.tapsOn, prophecy: this.prophecy, carrierDone: this.carrierDone },
+    };
+  }
+
+  private restore(s: RunSave) {
+    this.nightsTotal = s.nightsTotal;
+    this.resetRun();
+    this.seed = s.seed;
+    this.rng = stream(s.seed, "run" + s.day);
+    this.role = ROLES.find((r) => r.id === s.roleId) ?? ROLES[0];
+    this.major = MAJORS.find((m) => m.id === s.majorId) ?? MAJORS[0];
+    const def = ABILITIES.find((a) => a.id === s.abilityId) ?? ABILITIES[0];
+    const ab = new AbilityRuntime(def);
+    ab.found = s.ab.found as [boolean, boolean, boolean]; ab.foundAt = s.ab.foundAt; ab.awake = s.ab.awake; ab.awakeAt = s.ab.awakeAt;
+    ab.starDay = s.ab.starDay; ab.uses = s.ab.uses; ab.nearMiss = s.ab.nearMiss; ab.secretMiss = s.ab.secretMiss; ab.pressed = s.ab.pressed; ab.lastForm = s.ab.lastForm;
+    this.ability = ab;
+    this.day = s.day;
+    this.stash = { ...s.stash };
+    const p = this.player;
+    Object.assign(p, { x: s.player.x, z: s.player.z, hp: s.player.hp, medkits: s.player.medkits, tourniquet: s.player.tourniquet, melee: s.player.melee, ranged: s.player.ranged, ammo: s.player.ammo, charm: s.player.charm, carryCap: s.player.carryCap, speed: s.player.speed, meleeBonus: s.player.meleeBonus });
+    p.pack = { ...s.player.pack };
+    const bdef = BASES.find((b) => b.id === s.base.id)!;
+    this.chooseBase(bdef, true);
+    for (const c of s.base.cards) this.base!.addCard(c);
+    s.base.doors.forEach((d, i) => { const door = this.base!.doors[i]; if (door) { door.max = d.max; door.hp = d.hp; door.broken = d.hp <= 0; } });
+    this.base!.core.hp = s.base.core.hp; this.base!.core.max = s.base.core.max;
+    for (const n of s.npcs) {
+      const d = n.defId ? NAMED_NPCS.find((x) => x.id === n.defId) ?? null : null;
+      const npc = new Npc(this.scene, n.x, n.z, n.name, n.who, n.color, d);
+      npc.state = n.state as Npc["state"]; npc.hp = n.hp; npc.rescueT = n.rescueT;
+      if (npc.state === "base") this.stats.rescuedIds.add(npc.id);
+      this.npcs.push(npc);
+    }
+    for (const c of s.crates) {
+      this.addCrate(c.x, c.z, c.kind as Crate["kind"]);
+      if (c.opened) { const cr = this.crates[this.crates.length - 1]; cr.opened = true; const lid = cr.mesh.getObjectByName("lid"); if (lid) { lid.position.set(0.3, 0.6, 0.5); lid.rotation.x = -1.1; } }
+    }
+    this.nightPlan = s.nightPlan.map((id) => [NIGHT_FIRST, NIGHT_LAST, ...NIGHT_POOL].find((n) => n.id === id)!).filter(Boolean);
+    Object.assign(this.stats, s.stats);
+    this.swarm.kills = { ...s.kills };
+    for (const f of s.runFacts) this.runFacts.add(f);
+    this.codeKnown = s.flags.codeKnown; this.hasKey = s.flags.hasKey; this.tapsOn = s.flags.tapsOn; this.prophecy = s.flags.prophecy; this.carrierDone = s.flags.carrierDone;
+    this.rift.visible = true; this.riftGlow.visible = true; this.riftLight.intensity = 1.2;
+    this.world.lightFires(true);
+    this.ui.showHud(true);
+    this.input.clear();
+    this.fedT = 0;
+    this.startDay(false);
+    this.ui.toast("從第" + cn(this.day) + "天早上繼續。", "jade", 3000);
+  }
+
   pause() {
     if (this.ui.modalOpen || !["eve", "quake", "day", "night"].includes(this.phase)) return;
     this.paused = true;
@@ -1380,7 +1562,9 @@ export class Game {
     const camDist = clamp((aspect < 1 ? 14 : 21) / (tanH * aspect), 30, 66), pitch = 0.98;
     const hgt = camDist * Math.sin(pitch), back = camDist * Math.cos(pitch);
     this.camTarget.lerp(new THREE.Vector3(p.x, 0, p.z + 1), 0.12);
-    this.camera.position.set(this.camTarget.x, hgt, this.camTarget.z + back);
+    this.shake = Math.max(0, this.shake - 0.016 * 2);
+    const sk = this.shake * this.shake * 1.6;
+    this.camera.position.set(this.camTarget.x + (Math.random() - 0.5) * sk, hgt + (Math.random() - 0.5) * sk, this.camTarget.z + back + (Math.random() - 0.5) * sk);
     this.camera.lookAt(this.camTarget.x, 0, this.camTarget.z);
     // light by time of day
     const m = ((this.clock % 1440) + 1440) % 1440;
@@ -1427,6 +1611,8 @@ export class Game {
     this.ui.setSuspicion(this.phase === "eve" && this.suspicion > 0 ? this.suspicion : null);
     const need = this.people() + 1;
     this.ui.setRes({ ...this.stash, people: this.people() }, this.stash.food < need, p.carried(), p.carryCap);
+    const charm = p.charm ? CHARMS.find((x) => x.id === p.charm!.id)! : null;
+    this.ui.setGear([WEAPONS[p.melee].name, p.ranged ? `${WEAPONS[p.ranged].name} ${p.ammo}` : "", p.medkits ? `急救包×${p.medkits}` : "", charm ? (p.charm!.known ? charm.name : charm.look + "？") : ""].filter(Boolean).join("｜"));
     this.ui.setBoss(this.boss && this.boss.alive ? this.boss.hp / this.boss.max : null, "千眼之母");
     if (this.boss && this.boss.alive) this.ui.setObjective(null);
     this.hurtFlashT = Math.max(0, this.hurtFlashT - 0.016);
@@ -1454,6 +1640,7 @@ export class Game {
     const waiting = this.npcs.filter((n) => n.state === "waiting" && this.phase !== "eve").sort((a, c) => dist(a.x, a.z, p.x, p.z) - dist(c.x, c.z, p.x, p.z)).slice(0, 3);
     for (const n of waiting) add(n.x, n.z, `${n.name} ${Math.ceil(n.rescueT)}s`, "red");
     if (this.boss && this.boss.alive) add(this.boss.x, this.boss.z, "千眼之母", "red");
+    if (this.bellMark && p.charm?.known) add(this.bellMark.x, this.bellMark.z, "拾骸者", "red");
     this.ui.setArrows(marks.slice(0, 8));
   }
 
